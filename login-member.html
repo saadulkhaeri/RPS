@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login & Daftar Member - Rere Photo</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=JetBrains+Mono:wght@400;600&display=swap');
+    body { font-family: 'Montserrat', sans-serif; background-color: #f1eedb; color: #0F172A; }
+
+    /* ── RESPONSIVE GLOBAL ─────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    img { max-width: 100%; height: auto; }
+
+    /* Tabel scroll horizontal di mobile */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* Card grid responsif */
+    .grid-responsive {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    /* Stack jadi kolom di mobile */
+    @media (max-width: 640px) {
+      .sm-stack { flex-direction: column !important; }
+      .sm-full  { width: 100% !important; }
+      .sm-hide  { display: none !important; }
+      .sm-text-sm { font-size: .82rem !important; }
+      .sm-p-sm  { padding: .75rem !important; }
+
+      /* Tabel di mobile: horizontal scroll */
+      table { font-size: .75rem; }
+      th, td { padding: .5rem .6rem !important; white-space: nowrap; }
+
+      /* Modal lebih kecil */
+      .modal-box { padding: 1.25rem !important; margin: .75rem !important; }
+
+      /* Navbar tombol lebih kecil */
+      .nav-btn { padding: .4rem .7rem !important; font-size: .7rem !important; }
+    }
+
+    @media (max-width: 768px) {
+      .md-stack { flex-direction: column !important; }
+      .md-full  { width: 100% !important; }
+    }
+    /* ─────────────────────────────────────────── */
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-[#edf5ed]0 selection:text-white">
+
+  <header style="background:#3a5c37;border-bottom:2px solid #2d4a2c;position:sticky;top:0;z-index:50;box-shadow:0 4px 16px rgba(58,92,55,.35);">
+    <div style="max-width:900px;margin:0 auto;padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;">
+      <a href="index.html" style="text-decoration:none;display:flex;align-items:center;gap:.5rem;">
+        <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjE3MTAiIGhlaWdodD0iNzE2Ij4KCjxwYXRoIGQ9Ik0wIDAgQzM3LjU5OTM3NSAtMC4wNjE4NzUgNzUuMTk4NzUgLTAuMTIzNzUgMTEzLjkzNzUgLTAuMTg3NSBDMTI1Ljc2OTcyNDEyIC0wLjIxNDgxMjAxIDEzNy42MDE5NDgyNCAtMC4yNDIxMjQwMiAxNDkuNzkyNzI0NjEgLTAuMjcwMjYzNjcgQzE2NC4zNDI4OTU1MSAtMC4yODM4MTM0OCAxNjQuMzQyODk1NTEgLTAuMjgzODEzNDggMTcxLjE3NDA4NzUyIC0wLjI4NjMzMTE4IEMxNzUuOTAyMTk5MzMgLTAuMjg5MTA0MDQgMTgwLjYzMDIwODA3IC0wLjMwMDI1NzM1IDE4NS4zNTgyOTE2MyAtMC4zMTY3MjY2OCBDMTkxLjQyMDA4OTI1IC0wLjMzNzU1NjYzIDE5Ny40ODE3NDA1NSAtMC4zNDM0Mjc1MyAyMDMuNTQzNTcwNjQgLTAuMzM5MjE2ODMgQzIwNS43NDg5ODIyNyAtMC4zNDAwOTUxNSAyMDcuOTU0Mzk5OSAtMC4zNDU4OTI2IDIxMC4xNTk3ODAzOCAtMC4zNTc2NDUzOSBDMjMwLjE1NzU0NzkzIC0wLjQ1OTEyMzA0IDI1MC4xMDYxNTQyIDEuMTQxMDU2NTQgMjY5LjYyNSA1LjY4NzUgQzI3MC43MzM0MzI2MiA1Ljk0MDk2MTkxIDI3MS44NDE4NjUyMyA2LjE5NDQyMzgzIDI3Mi45ODM4ODY3MiA2LjQ1NTU2NjQxIEMzMDguNDc2NjE0NjggMTQuODk3MDUyNzEgMzQ0LjU1NjE3MjA0IDMyLjE2MTE0ODg2IDM2OCA2MSBDMzY4Ljc2MDU0Njg4IDYxLjkyMjk2ODc1IDM2OS41MjEwOTM3NSA2Mi44NDU5Mzc1IDM3MC4zMDQ2ODc1IDYzLjc5Njg3NSBDMzkzLjIwNDc3MzY3IDkyLjE3MDAyMzAyIDQwMy40MDU1NDE5NSAxMjYuMzY1OTQxMTYgNDAzLjMxNTY3MzgzIDE2Mi41Mjk1NDEwMiBDNDAzLjMxMjUyNDk1IDE2NS4xNjY2MDQwOSA0MDMuMzM2MDI3NCAxNjcuODAyNTI4NTEgNDAzLjM2MTMyODEyIDE3MC40Mzk0NTMxMiBDNDAzLjQxODg3MzMzIDE4NS42MzEyOTk3MiA0MDEuODk2MzQ5MjQgMjAwLjY1MzY2ODQyIDM5Ny4yNSAyMTUuMTg3NSBDMzk2Ljk5Mzk1OTk2IDIxNi4wMTAwODMwMSAzOTYuNzM3OTE5OTIgMjE2LjgzMjY2NjAyIDM5Ni40NzQxMjEwOSAyMTcuNjgwMTc1NzggQzM4My40MzE2OTUyMyAyNTguMzY0MDUzOTMgMzU1LjI4NDczNzExIDI4Ny4xMjgxODg1NiAzMTggMzA3IEMzMjEuMDIzNjM5OTggMzEyLjg4NzM3NTkzIDMyNC41MDc2NDg1MiAzMTguMTczMDgxMzQgMzI4LjQ0OTIxODc1IDMyMy40ODA0Njg3NSBDMzMxLjgxNTMxNzQyIDMyOC4wNzAxMDIyNiAzMzQuOTg5MzkwMDkgMzMyLjc5MjYzNzg3IDMzOC4xODc1IDMzNy41IEMzMzguODM0NzcwNTEgMzM4LjQ1MjM3NTQ5IDMzOS40ODIwNDEwMiAzMzkuNDA0NzUwOTggMzQwLjE0ODkyNTc4IDM0MC4zODU5ODYzMyBDMzQxLjQ2MjcyNTg4IDM0Mi4zMTk5Mjk5OSAzNDIuNzc2MjAyOTYgMzQ0LjI1NDA5MzEzIDM0NC4wODkzNTU0NyAzNDYuMTg4NDc2NTYgQzM0Ni45NjczMjQxNyAzNTAuNDIzNDIyNTggMzQ5Ljg1NzYyMDg1IDM1NC42NDk4ODc4IDM1Mi43NSAzNTguODc1IEMzNTMuMjgxODE4ODUgMzU5LjY1MjA2Mjk5IDM1My44MTM2Mzc3IDM2MC40MjkxMjU5OCAzNTQuMzYxNTcyMjcgMzYxLjIyOTczNjMzIEMzNTkuMTE3MTk5NzUgMzY4LjE3NTg3MDIgMzYzLjg4NTIzNTUyIDM3NS4xMTM0NDEyNCAzNjguNjU3MjI2NTYgMzgyLjA0ODMzOTg0IEMzNzAuOTM5MDg1MTkgMzg1LjM2NDkxNzY0IDM3My4yMTk0NTc1NSAzODguNjgyNTE3MSAzNzUuNSAzOTIgQzM3Ni40MTY2NTk3NiAzOTMuMzMzMzM4MDggMzc3LjMzMzMyNjQyIDM5NC42NjY2NzE0MiAzNzguMjUgMzk2IEMzODMuNzUgNDA0IDM4My43NSA0MDQgMzg1LjEyNTQ4ODI4IDQwNi4wMDA3MzI0MiBDMzg2LjA0MDQ5OTcgNDA3LjMzMTY0MzM1IDM4Ni45NTU1Mzg2OSA0MDguNjYyNTM1MzQgMzg3Ljg3MDYwNTQ3IDQwOS45OTM0MDgyIEMzOTAuMTg3ODI1ODEgNDEzLjM2MzY0ODA0IDM5Mi41MDQ1MzkzMiA0MTYuNzM0MjM0MzMgMzk0LjgyMDMxMjUgNDIwLjEwNTQ2ODc1IEMzOTUuMjg1MjYxMjMgNDIwLjc4MjA2NTQzIDM5NS43NTAyMDk5NiA0MjEuNDU4NjYyMTEgMzk2LjIyOTI0ODA1IDQyMi4xNTU3NjE3MiBDMzk3LjE1MDU0MTMzIDQyMy40OTY4NTAxOCAzOTguMDcxMjg4NDMgNDI0LjgzODMxNDA0IDM5OC45OTE0NTUwOCA0MjYuMTgwMTc1NzggQzQwMS4yMDY5NDMzMyA0MjkuNDA3NzM2NjEgNDAzLjQzNDc0MTkxIDQzMi42MjUyODM2IDQwNS42OTE0MDYyNSA0MzUuODI0MjE4NzUgQzQwNi4xMTI3Njg1NSA0MzYuNDI0MDM1NjQgNDA2LjUzNDEzMDg2IDQzNy4wMjM4NTI1NCA0MDYuOTY4MjYxNzIgNDM3LjY0MTg0NTcgQzQwOC4xMTQ2ODYzNyA0MzkuMjcxNDk1MDEgNDA5LjI2NjE1ODcgNDQwLjg5NzU5MDA0IDQxMC40MTc5Njg3NSA0NDIuNTIzNDM3NSBDNDEyIDQ0NSA0MTIgNDQ1IDQxMiA0NDcgQzM5NC40NTgzMTcyIDQ0Ny4zNTExMjY2NCAzNzYuOTE3NzM3NjEgNDQ3LjYxNTI1Njc5IDM1OS4zNzMzMzk2NSA0NDcuNzc3MTgyNTggQzM1MS4yMjYxMjkyMiA0NDcuODU0MzgzMzQgMzQzLjA4MTEwNzU2IDQ0Ny45NTk1Mjg5OCAzMzQuOTM1MzAyNzMgNDQ4LjEzMTU5MTggQzMyNy44MzEzMzgzMiA0NDguMjgxNTc1ODEgMzIwLjcyODk1OTA3IDQ0OC4zNzc5Nzk0NSAzMTMuNjIzNDU1MzUgNDQ4LjQxMTMyNzQyIEMzMDkuODYzNTMxMiA0NDguNDMwODEyMDggMzA2LjEwODEzOTQzIDQ0OC40NzYyMzEwOSAzMDIuMzQ5Njc2MTMgNDQ4LjU4NTk1MDg1IEMyNzcuNjU5Mjg1MzMgNDQ5LjI3OTI2ODkxIDI3Ny42NTkyODUzMyA0NDkuMjc5MjY4OTEgMjcxLjc4MzU5OTg1IDQ0My43NTYzNzgxNyBDMjY5LjI0NTc1MTkgNDQwLjY5MzQ0NDExIDI2Ny40MzA0ODA3MiA0MzcuNDYzNjExMDkgMjY1LjgzNjU1NzM5IDQzMy44MzAzMDg5MSBDMjY0LjYxMjkxNTQgNDMxLjE1MzA5NTI4IDI2Mi45NDc4MDY3NCA0MjguODMyOTcyOSAyNjEuMjUgNDI2LjQzNzUgQzI2MC42MTk2NDg0NCA0MjUuNDc4NDM3NSAyNTkuOTg5Mjk2ODcgNDI0LjUxOTM3NSAyNTkuMzM5ODQzNzUgNDIzLjUzMTI1IEMyNTYuMjE5MzA4MzcgNDE4Ljc5NjA2MDA1IDI1My4wMDk5OTA0MiA0MTQuMTIwODg3NzUgMjQ5LjgxMjUgNDA5LjQzNzUgQzI0OS4xNjMyOTU5IDQwOC40ODYzMzMwMSAyNDguNTE0MDkxOCA0MDcuNTM1MTY2MDIgMjQ3Ljg0NTIxNDg0IDQwNi41NTUxNzU3OCBDMjQxLjU3MDI2NjYxIDM5Ny4zNjU0NzI5NyAyMzUuMjg2NTQ3NjQgMzg4LjE4MTc3MDI2IDIyOSAzNzkgQzIyNi44NzQ3NjA0NSAzNzUuODk1OTk3MjQgMjI0Ljc0OTc1MTc1IDM3Mi43OTE4MzY2OSAyMjIuNjI1IDM2OS42ODc1IEMyMjIuMDk5NTQ1OSAzNjguOTE5OTQzODUgMjIxLjU3NDA5MTggMzY4LjE1MjM4NzcgMjIxLjAzMjcxNDg0IDM2Ny4zNjE1NzIyNyBDMjE4LjAyNDExMjIyIDM2Mi45NjQ4Mzc2IDIxNS4wMjExNzcyNyAzNTguNTY0MzA1NSAyMTIuMDIzNDM3NSAzNTQuMTYwMTU2MjUgQzIxMS4zNTM2MDg0IDM1My4xNzYzNTk4NiAyMTAuNjgzNzc5MyAzNTIuMTkyNTYzNDggMjA5Ljk5MzY1MjM0IDM1MS4xNzg5NTUwOCBDMjA4LjY5OTAwMDI1IDM0OS4yNzY5Mjk0NiAyMDcuNDA1MDE2MSAzNDcuMzc0NDQ4OTYgMjA2LjExMTgxNjQxIDM0NS40NzE0MzU1NSBDMjAzLjQ3ODE3NzgxIDM0MS42MDI0NTI0OSAyMDAuODMzOTE2NTYgMzM3Ljc1NjE0ODM4IDE5OC4wNjI1IDMzMy45ODQzNzUgQzE5NiAzMzEgMTk2IDMzMSAxOTYgMzI5IEMxNzMuMjMgMzI5IDE1MC40NiAzMjkgMTI3IDMyOSBDMTI3IDM2Ny45NCAxMjcgNDA2Ljg4IDEyNyA0NDcgQzg1LjA5IDQ0NyA0My4xOCA0NDcgMCA0NDcgQzAgMjk5LjQ5IDAgMTUxLjk4IDAgMCBaIE0xMjcgMTAwIEMxMjcgMTQzLjIzIDEyNyAxODYuNDYgMTI3IDIzMSBDMTQzLjg2MDkzNzUgMjMxLjA2MTg3NSAxNDMuODYwOTM3NSAyMzEuMDYxODc1IDE2MS4wNjI1IDIzMS4xMjUgQzE2NC41NTk4MDcxMyAyMzEuMTQzMjA4MDEgMTY4LjA1NzExNDI2IDIzMS4xNjE0MTYwMiAxNzEuNjYwNDAwMzkgMjMxLjE4MDE3NTc4IEMyMTguMDc3NDkzNTggMjMyLjMyNTQxMzM0IDIxOC4wNzc0OTM1OCAyMzIuMzI1NDEzMzQgMjU3LjgyMDMxMjUgMjExLjMxMjUgQzI3MC44MTU2NDY3MyAxOTcuNTI1MzM1MzcgMjc1LjU2MTAwNTgxIDE4MS44MjQ4NDA1OSAyNzUuMzQ2OTIzODMgMTYzLjAzNTg4ODY3IEMyNzQuODY1ODgwMDggMTQ3LjEyNjI4NTczIDI2OS43NzI3NjA4OSAxMzAuNjQzNDUzMTEgMjU4LjM3MTA5Mzc1IDExOS4wMTk1MzEyNSBDMjQyLjA1NDMxNzI4IDEwNS4xMjIwNDYxOCAyMjEuNjE3MjA3IDk5Ljc4Mjk3MzM3IDIwMC40NTA5Mjc3MyA5OS44ODY0NzQ2MSBDMTk5LjYzNzA0MzcgOTkuODg2MzU0MDcgMTk4LjgyMzE1OTY2IDk5Ljg4NjIzMzU0IDE5Ny45ODQ2MTI0NiA5OS44ODYxMDkzNSBDMTk1LjM4NDI0MzggOTkuODg2ODQ3OTQgMTkyLjc4Mzk0OTM3IDk5Ljg5NDQyNzQyIDE5MC4xODM1OTM3NSA5OS45MDIzNDM3NSBDMTg4LjU2NDQ5NDE3IDk5LjkwMzgxNjQ0IDE4Ni45NDUzOTQxIDk5LjkwNDgzNTE0IDE4NS4zMjYyOTM5NSA5OS45MDUzOTU1MSBDMTc5LjM2MzM1NTMxIDk5LjkxMDYxMDQ1IDE3My40MDA0MjY5IDk5LjkyNDU3MTY5IDE2Ny40Mzc1IDk5LjkzNzUgQzE1NC4wOTMxMjUgOTkuOTU4MTI1IDE0MC43NDg3NSA5OS45Nzg3NSAxMjcgMTAwIFogIiBmaWxsPSIjRkZGRkZGIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTAsMTE0KSIvPgoKPHBhdGggZD0iTTAgMCBDMS4zNzczODM0MiAwLjAwMDgxNTczIDEuMzc3MzgzNDIgMC4wMDA4MTU3MyAyLjc4MjU5Mjc3IDAuMDAxNjQ3OTUgQzMzLjI5NjY3NSAwLjA4NDM3NjAyIDYxLjkxNjg0ODYgNS41MTI3MzU4MyA4OS42ODc1IDE4LjM3NSBDOTAuMzI2MjMwNDcgMTguNjY0ODc3OTMgOTAuOTY0OTYwOTQgMTguOTU0NzU1ODYgOTEuNjIzMDQ2ODggMTkuMjUzNDE3OTcgQzEwNy4xNzU1NDQwOSAyNi4zNjE1ODk3MiAxMzMuNzU1NTg1MDEgNDAuNTExMTcwMDMgMTQxLjY4NzUgNTYuMzc1IEMxNDIuMTI1NzgxMjUgNTUuNjQ3OTY4NzUgMTQyLjU2NDA2MjUgNTQuOTIwOTM3NSAxNDMuMDE1NjI1IDU0LjE3MTg3NSBDMTU0Ljg4NjIxMTg0IDM1LjM1MjY1MTk2IDE3MC4wOTg3NDA3NiAyNC42OTc5NDI3NSAxOTEuNjg3NSAxOS4zNzUgQzIxMi4yMTcwOTU5MyAxNS42ODI5NjQ5OSAyMzQuMjM1NDIzMyAxOC44NjgxODAwNSAyNTEuOTM3NSAzMC4xMjUgQzI2OC4yNzUyMjMwNiA0MS42NDEwNDk4NSAyNzcuNjc2OTYzMDEgNTcuNzIzMjU2MTMgMjgxLjE4MzU5Mzc1IDc3LjMyMDMxMjUgQzI4NC4xNDg0MzA1OCA5OC42MjMyMTQxNiAyNzkuNzgxMTEwMjkgMTE5LjA3NzIwMzgyIDI2Ni45MjU3ODEyNSAxMzYuNDcyNjU2MjUgQzI1Ni4wNzk3Njc3MSAxNTAuNTM2NTA5NzYgMjM5LjI0MTEwOTI4IDE1OS43MzgyNDgzNiAyMjEuNjg3NSAxNjIuMzc1IEMyMTcuMzUwMTIyNTYgMTYyLjY0NzU1ODc5IDIxMy4wMzIxNzAwNSAxNjIuNjU0ODk0NTIgMjA4LjY4NzUgMTYyLjYyNSBDMjA3LjAwMTQwNjI1IDE2Mi42MzY2MDE1NiAyMDcuMDAxNDA2MjUgMTYyLjYzNjYwMTU2IDIwNS4yODEyNSAxNjIuNjQ4NDM3NSBDMTk4Ljc2NjQwMzg4IDE2Mi42MzMyMTU5IDE5Mi45ODQ4MjE2NyAxNjIuMDU2MDY0NjggMTg2LjY4NzUgMTYwLjM3NSBDMTg2LjY2MjQ0Mzg1IDE2MS40NjMyOTEwMiAxODYuNjM3Mzg3NyAxNjIuNTUxNTgyMDMgMTg2LjYxMTU3MjI3IDE2My42NzI4NTE1NiBDMTg2LjUxNjM4MzQgMTY3Ljc2NTcxNTkgMTg2LjQxNjQ0OTQ1IDE3MS44NTg0NTM3MiAxODYuMzE1MTg1NTUgMTc1Ljk1MTE3MTg4IEMxODYuMjcyMjUzMDMgMTc3LjcxMjIwOTE4IDE4Ni4yMzA1NTUwMyAxNzkuNDczMjc3MDggMTg2LjE5MDE4NTU1IDE4MS4yMzQzNzUgQzE4Ni4xMzE0NTY0OCAxODMuNzg2NTUxNjUgMTg2LjA2ODA3NTg4IDE4Ni4zMzg1Nzk5OSAxODYuMDAzOTA2MjUgMTg4Ljg5MDYyNSBDMTg1Ljk4NzE5Mzc2IDE4OS42NTk4OTMxOSAxODUuOTcwNDgxMjYgMTkwLjQyOTE2MTM4IDE4NS45NTMyNjIzMyAxOTEuMjIxNzQwNzIgQzE4NS43ODQyOTMxOCAxOTcuNjU5MjA0OTggMTg1LjIyNTE3NzQyIDIwMy45MjI4NzA5NiAxODQuNjg3NSAyMTAuMzc1IEMxMDEuODU3NSAyMTAuMzc1IDE5LjAyNzUgMjEwLjM3NSAtNjYuMzEyNSAyMTAuMzc1IEMtNTcuMzc4MTY4ODEgMjMyLjcxMDgyNzk3IC00Ni40NzM3NDM4MSAyNDcuNDE2OTk2MjYgLTI0LjQzNzUgMjU3LjE4NzUgQzMuMTc1MTU3NTEgMjY3Ljg4NDYyODcxIDM2LjI2MTMwMTc4IDI2Ny43NzA4Njg0NCA2My42MjQ1MTE3MiAyNTYuMjk3ODUxNTYgQzczLjQxNzMxODM3IDI1MS45MTcxNjQwOSA4Mi4zMjE3ODcxNiAyNDYuMzgwNDIwMzkgOTAuNTI4MzIwMzEgMjM5LjQ3MzYzMjgxIEM5My42NDA5OTQ2MSAyMzYuOTA0NjAzNTMgOTQuNDU0MTYyMDggMjM2LjM3NSA5OC42ODc1IDIzNi4zNzUgQzEwMC45NTgyNTE5NSAyMzguMTc1NzgxMjUgMTAwLjk1ODI1MTk1IDIzOC4xNzU3ODEyNSAxMDMuNDI1NzgxMjUgMjQwLjY4NzUgQzEwNC4zMjg3Njk1MyAyNDEuNTk4ODY3MTkgMTA1LjIzMTc1NzgxIDI0Mi41MTAyMzQzNyAxMDYuMTYyMTA5MzggMjQzLjQ0OTIxODc1IEMxMDcuMTA4MTExNTUgMjQ0LjQyNDQ0MTcgMTA4LjA1NDA3NDg2IDI0NS4zOTk3MDIzNCAxMDkgMjQ2LjM3NSBDMTA5LjkyNDkwMjM0IDI0Ny4zMDk1NzAzMSAxMTAuODQ5ODA0NjkgMjQ4LjI0NDE0MDYyIDExMS44MDI3MzQzOCAyNDkuMjA3MDMxMjUgQzExNi4zNTIxMTExNyAyNTMuODMwNzc1OTcgMTIwLjc0NTIyMzc4IDI1OC41MzE5MDM2NiAxMjQuOTczMzg4NjcgMjYzLjQ0OTIxODc1IEMxMjguMjExMjM0NDMgMjY3LjA4Njg5NTM0IDEzMS43MTQzNTAzNCAyNzAuNDYzOTgxODEgMTM1LjE4NzUgMjczLjg3NSBDMTQwLjAwNjI1MTk1IDI3OC42MDc1NDg4NyAxNDQuNjQ3NjMwNjggMjgzLjM5Mjk0MzczIDE0OS4wNTMyMjI2NiAyODguNTEzNjcxODggQzE1MS40NjAxNTgyOSAyOTEuMjU1MDA0IDE1NC4wMjMyMjI1IDI5My44MjAwMDQxMiAxNTYuNjI1IDI5Ni4zNzUgQzE1Ny4zNjQ1OTk2MSAyOTcuMTA3ODMyMDMgMTU3LjM2NDU5OTYxIDI5Ny4xMDc4MzIwMyAxNTguMTE5MTQwNjIgMjk3Ljg1NTQ2ODc1IEMxNTkuMzA2MjMyMjkgMjk5LjAzMTAzNTI1IDE2MC40OTY1MDQ5OCAzMDAuMjAzMzg4MjYgMTYxLjY4NzUgMzAxLjM3NSBDMTQ3LjQ0NTg4MDI3IDMyNi40MTYxNTYxNCAxMTEuMTk2NjIyNjcgMzQyLjU4MjI0MjcxIDg0Ljc5MTAxNTYyIDM1MC4yMTE5MTQwNiBDODEuNzAyODYzNDYgMzUxLjA1NjIyMTY0IDc4LjYwNjY1OTQ0IDM1MS44NTE2ODEgNzUuNSAzNTIuNjI1IEM3NC41ODI5MTI2IDM1Mi44NTkxMjU5OCA3My42NjU4MjUyIDM1My4wOTMyNTE5NSA3Mi43MjA5NDcyNyAzNTMuMzM0NDcyNjYgQzU0LjM0MzI1NTQ1IDM1Ny42Njc1ODg1MyAzNS42MDAyNDUwNyAzNTguODc5OTEyOTIgMTYuNzc4MDc2MTcgMzU4Ljc2NjExMzI4IEMxMy42MjE3OTUxOCAzNTguNzQ5OTgzNjIgMTAuNDY2NzkwNTUgMzU4Ljc2NjExMTg1IDcuMzEwNTQ2ODggMzU4Ljc4NTE1NjI1IEMtMTEuMDA2MjkyNDcgMzU4LjgwNTAzNTM4IC0yOS4xNDY1MDU3IDM1Ny4xNjQ4NTcwOSAtNDYuOTM3NSAzNTIuNjI1IEMtNDcuOTY5MDcyMjcgMzUyLjM2NzUwOTc3IC00OS4wMDA2NDQ1MyAzNTIuMTEwMDE5NTMgLTUwLjA2MzQ3NjU2IDM1MS44NDQ3MjY1NiBDLTgwLjk5MjYyNTg1IDM0My45Mjk1MjQ5MiAtMTA5LjUwNTE3OTE2IDMzMC45NTQzNjMwMSAtMTMzLjMxMjUgMzA5LjM3NSBDLTEzNC4yNzY3MTg3NSAzMDguNTQyMjY1NjMgLTEzNS4yNDA5Mzc1IDMwNy43MDk1MzEyNSAtMTM2LjIzNDM3NSAzMDYuODUxNTYyNSBDLTE0Mi42ODA5OTE0NiAzMDEuMjA2MzIxMDEgLTE0OC4wOTUxMDAxMyAyOTUuMTYwNDE5ODYgLTE1My4zMTI1IDI4OC4zNzUgQy0xNTQuMDY0MDIzNDQgMjg3LjQyNzUzOTA2IC0xNTQuODE1NTQ2ODggMjg2LjQ4MDA3ODEyIC0xNTUuNTg5ODQzNzUgMjg1LjUwMzkwNjI1IEMtMTYxLjI5NDYxMjY3IDI3OC4xNjA4NDQ3MiAtMTY1LjkyMTgzOTI5IDI3MC41Mzk3NjA1NSAtMTcwLjMxMjUgMjYyLjM3NSBDLTE3MC44MzU4NTkzNyAyNjEuNDMzOTg0MzggLTE3MS4zNTkyMTg3NSAyNjAuNDkyOTY4NzUgLTE3MS44OTg0Mzc1IDI1OS41MjM0Mzc1IEMtMTgyLjkyNTQyNjE1IDIzOC44MTEzNjg4NiAtMTg5LjMyMjc5MjY5IDIxMy45MTYxMjM0NCAtMTg5LjU1MDc4MTI1IDE5MC40Njg3NSBDLTE4OS41NjA1NzUxIDE4OS42MzQ3MDEzOSAtMTg5LjU3MDM2ODk2IDE4OC44MDA2NTI3NyAtMTg5LjU4MDQ1OTU5IDE4Ny45NDEzMjk5NiBDLTE4OS43NDk4MjE0NSAxNjkuNzc1OTgwMDkgLTE4OS43Mzc5OTkxIDE1Mi4xMTQyOTk0NiAtMTg1LjMxMjUgMTM0LjM3NSBDLTE4NS4xMDM1MTA3NCAxMzMuNTE3OTM0NTcgLTE4NC44OTQ1MjE0OCAxMzIuNjYwODY5MTQgLTE4NC42NzkxOTkyMiAxMzEuNzc3ODMyMDMgQy0xNzcuNTc5MzYzNTMgMTAzLjYwNzE3MzEyIC0xNjMuMjc0NjYxMDYgNzguNDAyNjQ1MzIgLTE0My4zMTI1IDU3LjM3NSBDLTE0Mi44NDg5MjA5IDU2Ljg3ODg3MjA3IC0xNDIuMzg1MzQxOCA1Ni4zODI3NDQxNCAtMTQxLjkwNzcxNDg0IDU1Ljg3MTU4MjAzIEMtMTE2LjY4ODE0OTUzIDI5LjAxNTM0ODc3IC04My4yMTEwNzM1NiAxMi40NTU2MTc4OSAtNDcuNSA0LjU2MjUgQy00Ni42MTg3NjQ2NSA0LjM2NzYwOTg2IC00NS43Mzc1MjkzIDQuMTcyNzE5NzMgLTQ0LjgyOTU4OTg0IDMuOTcxOTIzODMgQy0yOS44ODYxNzI4OCAwLjg2MTc5NjA1IC0xNS4yMTYyNjE0NCAtMC4wMzQwNzcwNSAwIDAgWiBNLTUxLjMxMjUgMTA4LjM3NSBDLTU5LjY5NjU5NzAyIDExOC45NjYxNDY2NCAtNjguMzEyNSAxMzIuNDQ0ODIzMjggLTY4LjMxMjUgMTQ2LjM3NSBDLTIyLjExMjUgMTQ2LjM3NSAyNC4wODc1IDE0Ni4zNzUgNzEuNjg3NSAxNDYuMzc1IEM2Ny4zOTQxMzUwMiAxMjkuMjAxNTQwMDkgNjMuMjAzNTc0OTIgMTE3LjUzNTM3ODI5IDUwLjY4NzUgMTA1LjM3NSBDNTAuMDc1MTk1MzEgMTA0Ljc0MjA3MDMxIDQ5LjQ2Mjg5MDYyIDEwNC4xMDkxNDA2MyA0OC44MzIwMzEyNSAxMDMuNDU3MDMxMjUgQzM1LjEyNzE3MzExIDkwLjIxOTcxNjI0IDE2LjIwNzA2MTg1IDg2LjczMTQ2OTExIC0yLjEwODE1NDMgODYuOTA2NDk0MTQgQy0yMC43NDQ3MTY0OSA4Ny40NDYzNzc5MSAtMzguNjY4MzQzOTkgOTQuMjU2MDUzOTIgLTUxLjMxMjUgMTA4LjM3NSBaICIgZmlsbD0iI0ZGRkVGRSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTMzMC4zMTI1LDIwOC42MjUpIi8+Cgo8cGF0aCBkPSJNMCAwIEMxLjM3NzM4MzQyIDAuMDAwODE1NzMgMS4zNzczODM0MiAwLjAwMDgxNTczIDIuNzgyNTkyNzcgMC4wMDE2NDc5NSBDMzMuMjk2Njc1IDAuMDg0Mzc2MDIgNjEuOTE2ODQ4NiA1LjUxMjczNTgzIDg5LjY4NzUgMTguMzc1IEM5MC4zMjYyMzA0NyAxOC42NjQ4Nzc5MyA5MC45NjQ5NjA5NCAxOC45NTQ3NTU4NiA5MS42MjMwNDY4OCAxOS4yNTM0MTc5NyBDMTA1LjYyOTMxNTk0IDI1LjY1NDg5NTggMTE4LjA4NTg0OTAyIDM0LjI5NzE0Nzk2IDEyOS42ODc1IDQ0LjM3NSBDMTMxLjA3NTgyMDMxIDQ1LjU2MjIyNjU2IDEzMS4wNzU4MjAzMSA0NS41NjIyMjY1NiAxMzIuNDkyMTg3NSA0Ni43NzM0Mzc1IEMxMzguOTc1MDA0MzYgNTIuNDY2MTA0OTMgMTQ0LjQyODc3NDA0IDU4LjU0OTA0MTUzIDE0OS42ODc1IDY1LjM3NSBDMTUwLjc3OTk4MDQ3IDY2LjcyNjU4MjAzIDE1MC43Nzk5ODA0NyA2Ni43MjY1ODIwMyAxNTEuODk0NTMxMjUgNjguMTA1NDY4NzUgQzE3My40MTg3NDAxMiA5NS40MzQ4MDU3NiAxODUuOTA5Mjk3NTMgMTMyLjgxNjExMTIzIDE4NS44MjAzMTI1IDE2Ny41ODIwMzEyNSBDMTg1LjgyMTc0NzU5IDE2OC44NTIwMDIwMyAxODUuODIxNzQ3NTkgMTY4Ljg1MjAwMjAzIDE4NS44MjMyMTE2NyAxNzAuMTQ3NjI4NzggQzE4NS44MjM4ODc0NCAxNzEuOTI2NjI2MzMgMTg1LjgyMjA3NTYgMTczLjcwNTYyNjQzIDE4NS44MTc4NzEwOSAxNzUuNDg0NjE5MTQgQzE4NS44MTI1MzQ0OSAxNzguMTcwMTQyNjQgMTg1LjgxNzgyNjQyIDE4MC44NTU0OTczNyAxODUuODI0MjE4NzUgMTgzLjU0MTAxNTYyIEMxODUuODIzNTU3NDcgMTg1LjI4Mzg1NDUzIDE4NS44MjIyNzUyOCAxODcuMDI2NjkzMzMgMTg1LjgyMDMxMjUgMTg4Ljc2OTUzMTI1IEMxODUuODIyMzM2NzMgMTg5LjU1NDMxMzUxIDE4NS44MjQzNjA5NiAxOTAuMzM5MDk1NzYgMTg1LjgyNjQ0NjUzIDE5MS4xNDc2NTkzIEMxODUuNzk5ODcyMTggMTk3LjY0NjUzMTg2IDE4NS4yMzI1OTkyNCAyMDMuODMzODA5MDcgMTg0LjY4NzUgMjEwLjM3NSBDMTAxLjg1NzUgMjEwLjM3NSAxOS4wMjc1IDIxMC4zNzUgLTY2LjMxMjUgMjEwLjM3NSBDLTU3LjM3ODE2ODgxIDIzMi43MTA4Mjc5NyAtNDYuNDczNzQzODEgMjQ3LjQxNjk5NjI2IC0yNC40Mzc1IDI1Ny4xODc1IEMzLjE3NTE1NzUxIDI2Ny44ODQ2Mjg3MSAzNi4yNjEzMDE3OCAyNjcuNzcwODY4NDQgNjMuNjI0NTExNzIgMjU2LjI5Nzg1MTU2IEM3My40MTczMTgzNyAyNTEuOTE3MTY0MDkgODIuMzIxNzg3MTYgMjQ2LjM4MDQyMDM5IDkwLjUyODMyMDMxIDIzOS40NzM2MzI4MSBDOTMuNjQwOTk0NjEgMjM2LjkwNDYwMzUzIDk0LjQ1NDE2MjA4IDIzNi4zNzUgOTguNjg3NSAyMzYuMzc1IEMxMDAuOTU4MjUxOTUgMjM4LjE3NTc4MTI1IDEwMC45NTgyNTE5NSAyMzguMTc1NzgxMjUgMTAzLjQyNTc4MTI1IDI0MC42ODc1IEMxMDQuMzI4NzY5NTMgMjQxLjU5ODg2NzE5IDEwNS4yMzE3NTc4MSAyNDIuNTEwMjM0MzcgMTA2LjE2MjEwOTM4IDI0My40NDkyMTg3NSBDMTA3LjEwODExMTU1IDI0NC40MjQ0NDE3IDEwOC4wNTQwNzQ4NiAyNDUuMzk5NzAyMzQgMTA5IDI0Ni4zNzUgQzEwOS45MjQ5MDIzNCAyNDcuMzA5NTcwMzEgMTEwLjg0OTgwNDY5IDI0OC4yNDQxNDA2MiAxMTEuODAyNzM0MzggMjQ5LjIwNzAzMTI1IEMxMTYuMzUyMTExMTcgMjUzLjgzMDc3NTk3IDEyMC43NDUyMjM3OCAyNTguNTMxOTAzNjYgMTI0Ljk3MzM4ODY3IDI2My40NDkyMTg3NSBDMTI4LjIxMTIzNDQzIDI2Ny4wODY4OTUzNCAxMzEuNzE0MzUwMzQgMjcwLjQ2Mzk4MTgxIDEzNS4xODc1IDI3My44NzUgQzE0MC4wMDYyNTE5NSAyNzguNjA3NTQ4ODcgMTQ0LjY0NzYzMDY4IDI4My4zOTI5NDM3MyAxNDkuMDUzMjIyNjYgMjg4LjUxMzY3MTg4IEMxNTEuNDYwMTU4MjkgMjkxLjI1NTAwNCAxNTQuMDIzMjIyNSAyOTMuODIwMDA0MTIgMTU2LjYyNSAyOTYuMzc1IEMxNTcuMzY0NTk5NjEgMjk3LjEwNzgzMjAzIDE1Ny4zNjQ1OTk2MSAyOTcuMTA3ODMyMDMgMTU4LjExOTE0MDYyIDI5Ny44NTU0Njg3NSBDMTU5LjMwNjIzMjI5IDI5OS4wMzEwMzUyNSAxNjAuNDk2NTA0OTggMzAwLjIwMzM4ODI2IDE2MS42ODc1IDMwMS4zNzUgQzE0Ny40NDU4ODAyNyAzMjYuNDE2MTU2MTQgMTExLjE5NjYyMjY3IDM0Mi41ODIyNDI3MSA4NC43OTEwMTU2MiAzNTAuMjExOTE0MDYgQzgxLjcwMjg2MzQ2IDM1MS4wNTYyMjE2NCA3OC42MDY2NTk0NCAzNTEuODUxNjgxIDc1LjUgMzUyLjYyNSBDNzQuNTgyOTEyNiAzNTIuODU5MTI1OTggNzMuNjY1ODI1MiAzNTMuMDkzMjUxOTUgNzIuNzIwOTQ3MjcgMzUzLjMzNDQ3MjY2IEM1NC4zNDMyNTU0NSAzNTcuNjY3NTg4NTMgMzUuNjAwMjQ1MDcgMzU4Ljg3OTkxMjkyIDE2Ljc3ODA3NjE3IDM1OC43NjYxMTMyOCBDMTMuNjIxNzk1MTggMzU4Ljc0OTk4MzYyIDEwLjQ2Njc5MDU1IDM1OC43NjYxMTE4NSA3LjMxMDU0Njg4IDM1OC43ODUxNTYyNSBDLTExLjAwNjI5MjQ3IDM1OC44MDUwMzUzOCAtMjkuMTQ2NTA1NyAzNTcuMTY0ODU3MDkgLTQ2LjkzNzUgMzUyLjYyNSBDLTQ3Ljk2OTA3MjI3IDM1Mi4zNjc1MDk3NyAtNDkuMDAwNjQ0NTMgMzUyLjExMDAxOTUzIC01MC4wNjM0NzY1NiAzNTEuODQ0NzI2NTYgQy04MC45OTI2MjU4NSAzNDMuOTI5NTI0OTIgLTEwOS41MDUxNzkxNiAzMzAuOTU0MzYzMDEgLTEzMy4zMTI1IDMwOS4zNzUgQy0xMzQuMjc2NzE4NzUgMzA4LjU0MjI2NTYzIC0xMzUuMjQwOTM3NSAzMDcuNzA5NTMxMjUgLTEzNi4yMzQzNzUgMzA2Ljg1MTU2MjUgQy0xNDIuNjgwOTkxNDYgMzAxLjIwNjMyMTAxIC0xNDguMDk1MTAwMTMgMjk1LjE2MDQxOTg2IC0xNTMuMzEyNSAyODguMzc1IEMtMTU0LjA2NDAyMzQ0IDI4Ny40Mjc1MzkwNiAtMTU0LjgxNTU0Njg3IDI4Ni40ODAwNzgxMiAtMTU1LjU4OTg0Mzc1IDI4NS41MDM5MDYyNSBDLTE2MS4yOTQ2MTI2NyAyNzguMTYwODQ0NzIgLTE2NS45MjE4MzkyOSAyNzAuNTM5NzYwNTUgLTE3MC4zMTI1IDI2Mi4zNzUgQy0xNzAuODM1ODU5MzggMjYxLjQzMzk4NDM4IC0xNzEuMzU5MjE4NzUgMjYwLjQ5Mjk2ODc1IC0xNzEuODk4NDM3NSAyNTkuNTIzNDM3NSBDLTE4Mi45MjU0MjYxNSAyMzguODExMzY4ODYgLTE4OS4zMjI3OTI2OSAyMTMuOTE2MTIzNDQgLTE4OS41NTA3ODEyNSAxOTAuNDY4NzUgQy0xODkuNTYwNTc1MSAxODkuNjM0NzAxMzkgLTE4OS41NzAzNjg5NiAxODguODAwNjUyNzcgLTE4OS41ODA0NTk1OSAxODcuOTQxMzI5OTYgQy0xODkuNzQ5ODIxNDUgMTY5Ljc3NTk4MDA5IC0xODkuNzM3OTk5MSAxNTIuMTE0Mjk5NDYgLTE4NS4zMTI1IDEzNC4zNzUgQy0xODUuMTAzNTEwNzQgMTMzLjUxNzkzNDU3IC0xODQuODk0NTIxNDggMTMyLjY2MDg2OTE0IC0xODQuNjc5MTk5MjIgMTMxLjc3NzgzMjAzIEMtMTc3LjU3OTM2MzUzIDEwMy42MDcxNzMxMiAtMTYzLjI3NDY2MTA2IDc4LjQwMjY0NTMyIC0xNDMuMzEyNSA1Ny4zNzUgQy0xNDIuODQ4OTIwOSA1Ni44Nzg4NzIwNyAtMTQyLjM4NTM0MTggNTYuMzgyNzQ0MTQgLTE0MS45MDc3MTQ4NCA1NS44NzE1ODIwMyBDLTExNi42ODgxNDk1MyAyOS4wMTUzNDg3NyAtODMuMjExMDczNTYgMTIuNDU1NjE3ODkgLTQ3LjUgNC41NjI1IEMtNDYuNjE4NzY0NjUgNC4zNjc2MDk4NiAtNDUuNzM3NTI5MyA0LjE3MjcxOTczIC00NC44Mjk1ODk4NCAzLjk3MTkyMzgzIEMtMjkuODg2MTcyODggMC44NjE3OTYwNSAtMTUuMjE2MjYxNDQgLTAuMDM0MDc3MDUgMCAwIFogTS01MS4zMTI1IDEwOC4zNzUgQy01OS42OTY1OTcwMiAxMTguOTY2MTQ2NjQgLTY4LjMxMjUgMTMyLjQ0NDgyMzI4IC02OC4zMTI1IDE0Ni4zNzUgQy0yMi4xMTI1IDE0Ni4zNzUgMjQuMDg3NSAxNDYuMzc1IDcxLjY4NzUgMTQ2LjM3NSBDNjcuMzk0MTM1MDIgMTI5LjIwMTU0MDA5IDYzLjIwMzU3NDkyIDExNy41MzUzNzgyOSA1MC42ODc1IDEwNS4zNzUgQzUwLjA3NTE5NTMxIDEwNC43NDIwNzAzMSA0OS40NjI4OTA2MiAxMDQuMTA5MTQwNjMgNDguODMyMDMxMjUgMTAzLjQ1NzAzMTI1IEMzNS4xMjcxNzMxMSA5MC4yMTk3MTYyNCAxNi4yMDcwNjE4NSA4Ni43MzE0NjkxMSAtMi4xMDgxNTQzIDg2LjkwNjQ5NDE0IEMtMjAuNzQ0NzE2NDkgODcuNDQ2Mzc3OTEgLTM4LjY2ODM0Mzk5IDk0LjI1NjA1MzkyIC01MS4zMTI1IDEwOC4zNzUgWiAiIGZpbGw9IiNGRkZGRkYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDcxNC4zMTI1LDI1MS42MjUpIi8+Cgo8cGF0aCBkPSJNMCAwIEMwIDM2LjMgMCA3Mi42IDAgMTEwIEMtNi45MyAxMDkuNTA1IC02LjkzIDEwOS41MDUgLTE0IDEwOSBDLTM5Ljg4MTM1MjI5IDEwOC4xODU4MjU1OCAtNjUuMjQ1NDg0OTUgMTA5LjYyNzIxMzk4IC04Ni4xMjUgMTI3IEMtMTAyLjM5ODYxNjUzIDE0Mi4zOTM5NjE1OSAtMTA4Ljc0NjQ0OTQ2IDE2NC43MDA0MTkyOCAtMTA5LjM4NzgxNzM4IDE4Ni41MTcyMTE5MSBDLTEwOS42MTQ4OTU1OSAxOTYuMDY0MDc2MTkgLTEwOS42MDk1NzEyOCAyMDUuNjE0NTI3MjUgLTEwOS42MDc1MDQ4NCAyMTUuMTYzNTQwODQgQy0xMDkuNjEwNjY3NTUgMjE5Ljk4NjgzMzI3IC0xMDkuNjM2MzU0MzYgMjI0LjgxMDAwOTIgLTEwOS42NTk0ODQ4NiAyMjkuNjMzMjM5NzUgQy0xMDkuNjk5Nzk0MjcgMjM4LjczNDQ3NTg4IC0xMDkuNzIwMzI2MTEgMjQ3LjgzNTY0MDgzIC0xMDkuNzMzNDU4NzYgMjU2LjkzNjk1MjM1IEMtMTA5Ljc1MjQwNzQ3IDI2OS4yNTgzMTQ1NCAtMTA5LjgwMjUwMzY1IDI4MS41Nzk1NDk1MyAtMTA5Ljg1MDcwMjI5IDI5My45MDA4MjU1IEMtMTA5LjkyNTY1MTg4IDMxMy4yNjcyMTAyOCAtMTA5Ljk1OTUwMTEzIDMzMi42MzM0NDE1MSAtMTEwIDM1MiBDLTE1MC4yNiAzNTIgLTE5MC41MiAzNTIgLTIzMiAzNTIgQy0yMzIgMjM3LjgyIC0yMzIgMTIzLjY0IC0yMzIgNiBDLTE5My43MiA2IC0xNTUuNDQgNiAtMTE2IDYgQy0xMTUuNjcgMTguNTQgLTExNS4zNCAzMS4wOCAtMTE1IDQ0IEMtMTEwLjU0NSAzOS4wNSAtMTEwLjU0NSAzOS4wNSAtMTA2IDM0IEMtMTAzLjgyNTQxMzA0IDMyLjAyNjUzMDkxIC0xMDEuNzUyNjk2NzYgMzAuMjA3MjgzMDcgLTk5LjQzNzUgMjguNDM3NSBDLTk4LjU1NDMzMTA1IDI3Ljc1NzM1ODQgLTk4LjU1NDMzMTA1IDI3Ljc1NzM1ODQgLTk3LjY1MzMyMDMxIDI3LjA2MzQ3NjU2IEMtNjguOTU5OTUxNzEgNS41Mzk2ODQ1OCAtMzUuMTMyNDI5OTkgMCAwIDAgWiAiIGZpbGw9IiNGRkZGRkYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDExNTAsMjA5KSIvPgoKPHBhdGggZD0iTTAgMCBDMTQuMDYxMDI5OTIgMTEuOTU1MTY1ODQgMjEuOTk1MDkyNyAyOC43NjE4MTA5OCAyNCA0NyBDMjUuNzY2MTU5MyA2OS44ODMyODE0MiAxOS42NTkwODU0OSA4OS4xNTM1OTEzMyA1LjM1NTQ2ODc1IDEwNy4wNTg1OTM3NSBDLTUuNDQ4OTE4MzMgMTE4LjkwMjM5MDIyIC0yMy4wOTY2NTU0IDEyNy4xMTA1ODgyNSAtMzguOTc4NzU5NzcgMTI4LjIwNTMyMjI3IEMtNDIuMjc5OTc2MzMgMTI4LjMwMzc3MjA5IC00NS41NzIzOTI2NSAxMjguMzIyMDQ1MTEgLTQ4Ljg3NSAxMjguMzEyNSBDLTQ5Ljk4MjMwNDY5IDEyOC4zMjg2MTMyOCAtNTEuMDg5NjA5MzggMTI4LjM0NDcyNjU2IC01Mi4yMzA0Njg3NSAxMjguMzYxMzI4MTIgQy01OS42MTk0NzUxMiAxMjguMzY1NjY5NDkgLTY1Ljk5NzgxNzQxIDEyNy4zNDA1OTY4MiAtNzMgMTI1IEMtNzQuMDY5OTIxODggMTI0LjY0Njc5Njg4IC03NS4xMzk4NDM3NSAxMjQuMjkzNTkzNzUgLTc2LjI0MjE4NzUgMTIzLjkyOTY4NzUgQy05NC42MzU2MDU2MyAxMTYuNTYxNDA0MjcgLTEwOC4yMzg5NzU1NSAxMDMuNDU3NDMzMzYgLTExNi42MDkzNzUgODUuNTU4NTkzNzUgQy0xMjQuODU5NjQ1NzggNjUuMDA1NzEzMyAtMTIzLjg4NjM0OTUgNDIuNTUyMjU0NzYgLTExNS40NjUzMzIwMyAyMi4xNjI1OTc2NiBDLTExMy4wNDQzMzY2NCAxNi42OTY3MjkzNyAtMTEwLjA0NjU2MTc1IDEyLjM2MTU2MzU2IC0xMDYgOCBDLTEwNS4yODE5OTIxOSA3LjE4MDE1NjI1IC0xMDQuNTYzOTg0MzggNi4zNjAzMTI1IC0xMDMuODI0MjE4NzUgNS41MTU2MjUgQy03Ny42MTI2OTkwNSAtMjIuNzk3OTY0MiAtMjkuNTUwNTA3MTEgLTIyLjkxOTI1NzI3IDAgMCBaICIgZmlsbD0iI0ZGQ0MwMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTU4OCwyNDMpIi8+Cgo8L3N2Zz4K" alt="Rere Photo" style="height:34px;width:auto;object-fit:contain;" onerror="this.style.display='none'">
+      </a>
+      <a href="index.html" style="font-size:.75rem;font-weight:700;color:#fff;text-decoration:none;border:2px solid rgba(255,255,255,.4);border-radius:.65rem;padding:.4rem .9rem;">&larr; Beranda</a>
+    </div>
+  </header>
+
+  <main class="flex-grow flex items-center justify-center p-4 py-8 sm:py-10">
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <div id="global-spinner" class="hidden fixed inset-0 bg-black/30 backdrop-blur-xs z-50 flex items-center justify-center">
+      <div class="bg-white p-5 rounded-2xl shadow-xl flex items-center gap-4">
+        <div class="w-7 h-7 border-4 border-[#3a5c37] border-t-transparent rounded-full animate-spin"></div>
+        <span class="font-semibold text-slate-700 text-sm">Memproses...</span>
+      </div>
+    </div>
+
+    <div class="w-full max-w-md">
+      <div class="text-center mb-6 sm:mb-8">
+        <div class="inline-block p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-[#edf5ed] text-[#3a5c37] mb-3 text-2xl sm:text-3xl">👤</div>
+        <h1 class="text-xl sm:text-2xl font-black text-slate-900">Portal Member Rere Photo</h1>
+        <p class="text-[11px] sm:text-xs text-slate-500 mt-1 px-4">Khusus pelanggan/klien studio — masuk atau daftar sebagai member di sini.</p>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-sm p-5 sm:p-8">
+        <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl mb-5 sm:mb-6 text-center text-[11px] sm:text-xs font-bold">
+          <button id="tab-btn-login" onclick="switchAuthTab('login')" class="py-2.5 rounded-xl bg-white text-[#3a5c37] shadow-xs transition">Masuk Member</button>
+          <button id="tab-btn-register" onclick="switchAuthTab('register')" class="py-2.5 rounded-xl text-slate-500 hover:text-slate-800 transition">Daftar Member</button>
+        </div>
+
+        <!-- LOGIN -->
+        <form id="form-login-member" class="space-y-3 sm:space-y-4">
+          <div>
+            <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1">Nomor Handphone (ID Member)</label>
+            <input type="tel" id="login-email-phone" placeholder="Nomor HP Anda" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm" />
+          </div>
+          <div>
+            <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1">Kata Sandi</label>
+            <input type="password" id="login-password" placeholder="••••••••" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm" />
+          </div>
+          <button type="submit" class="w-full py-3 sm:py-3.5 px-4 rounded-xl bg-[#3a5c37] sm-full hover:bg-[#2d4a2c] text-white font-bold text-sm shadow-md hover:shadow-lg transition">
+            Masuk ke Dashboard Member &rarr;
+          </button>
+          <button type="button" onclick="openForgotPasswordModal()" class="w-full text-center text-[11px] sm:text-xs font-bold text-[#3a5c37] hover:underline">
+            Lupa Password?
+          </button>
+        </form>
+
+        <!-- REGISTER -->
+        <form id="form-register-member" class="space-y-3 sm:space-y-4 hidden">
+          <div>
+            <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1">Nama Lengkap</label>
+            <input type="text" id="reg-name" placeholder="Nama lengkap Anda" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm" />
+          </div>
+          <div>
+            <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1">Nomor Handphone (akan jadi ID Member)</label>
+            <input type="tel" id="reg-phone" placeholder="Nomor HP Anda" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm" />
+          </div>
+          <div>
+            <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1">Email <span class="text-slate-400 font-normal">(opsional)</span></label>
+            <input type="email" id="reg-email" placeholder="emailanda@gmail.com" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm" />
+          </div>
+          <div>
+            <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1">Buat Kata Sandi</label>
+            <input type="password" id="reg-password" placeholder="Minimal 6 karakter" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm" />
+          </div>
+          <div class="p-2.5 sm:p-3 rounded-xl bg-[#edf5ed] border border-[#a0c8a0] text-[#2d4a2c] text-[10px] sm:text-xs flex items-center gap-2 font-medium">
+            <span>🎁 Welcome Bonus: Langsung dapat 10 Poin & Tier Silver!</span>
+          </div>
+          <button type="submit" class="w-full py-3 sm:py-3.5 px-4 rounded-xl bg-[#3a5c37] sm-full hover:bg-[#2d4a2c] text-white font-bold text-sm shadow-md hover:shadow-lg transition">
+            Daftar Member Rere Photo &rarr;
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL LUPA PASSWORD -->
+  <div id="forgot-password-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-black text-slate-900 text-base">🔑 Lupa Password</h3>
+        <button onclick="closeForgotPasswordModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold">✕</button>
+      </div>
+
+      <!-- Langkah 1: minta kode -->
+      <form id="form-forgot-step1" class="space-y-3">
+        <p class="text-xs text-slate-500">Masukkan nomor HP akun kamu. Kalau ada email terdaftar, kode reset akan dikirim ke email itu.</p>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Nomor HP (ID Member)</label>
+          <input type="tel" id="forgot-phone" required placeholder="Nomor HP Anda" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm">
+        </div>
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-[#3a5c37] hover:bg-[#2d4a2c] text-white font-bold text-sm shadow">Kirim Kode ke Email</button>
+      </form>
+
+      <!-- Langkah 2: masukkan kode + password baru -->
+      <form id="form-forgot-step2" class="space-y-3 hidden">
+        <p class="text-xs text-slate-500">Cek email kamu (termasuk folder Spam), lalu masukkan kode 6 digit dan password baru di bawah ini.</p>
+        <input type="hidden" id="forgot-phone-confirm">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Kode dari Email</label>
+          <input type="text" id="forgot-code" required maxlength="6" inputmode="numeric" placeholder="6 digit" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm tracking-widest font-mono text-center">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Password Baru</label>
+          <input type="password" id="forgot-new-password" required placeholder="Minimal 4 karakter" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm">
+        </div>
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-[#3a5c37] hover:bg-[#2d4a2c] text-white font-bold text-sm shadow">Ganti Password</button>
+        <button type="button" onclick="backToForgotStep1()" class="w-full text-center text-[11px] font-bold text-slate-400 hover:underline">← Kirim ulang / ganti nomor</button>
+      </form>
+    </div>
+  </div>
+
+  <footer class="py-4 text-center text-[10px] sm:text-xs text-slate-400">
+    &copy; 2026 Rere Photo. Hanya untuk akses Member Klien.
+  </footer>
+
+  <script src="app.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    function switchAuthTab(tab) {
+      const btnLogin = document.getElementById("tab-btn-login");
+      const btnReg = document.getElementById("tab-btn-register");
+      const formLogin = document.getElementById("form-login-member");
+      const formReg = document.getElementById("form-register-member");
+      if (tab === "login") {
+        btnLogin.className = "py-2.5 rounded-xl bg-white text-[#3a5c37] shadow-xs font-bold transition";
+        btnReg.className = "py-2.5 rounded-xl text-slate-500 hover:text-slate-800 font-bold transition";
+        formLogin.classList.remove("hidden");
+        formReg.classList.add("hidden");
+      } else {
+        btnReg.className = "py-2.5 rounded-xl bg-white text-[#3a5c37] shadow-xs font-bold transition";
+        btnLogin.className = "py-2.5 rounded-xl text-slate-500 hover:text-slate-800 font-bold transition";
+        formReg.classList.remove("hidden");
+        formLogin.classList.add("hidden");
+      }
+    }
+
+    function openForgotPasswordModal() {
+      document.getElementById("forgot-phone").value = document.getElementById("login-email-phone").value || "";
+      document.getElementById("form-forgot-step1").classList.remove("hidden");
+      document.getElementById("form-forgot-step2").classList.add("hidden");
+      document.getElementById("forgot-password-modal").classList.remove("hidden");
+    }
+    function closeForgotPasswordModal() {
+      document.getElementById("forgot-password-modal").classList.add("hidden");
+    }
+    function backToForgotStep1() {
+      document.getElementById("form-forgot-step1").classList.remove("hidden");
+      document.getElementById("form-forgot-step2").classList.add("hidden");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("tab") === "register") switchAuthTab("register");
+
+      // Redirect tujuan setelah login/daftar (mis. dari halaman booking).
+      const nextUrl = urlParams.get("next") || "client.html";
+
+      guardFormSubmit(document.getElementById("form-login-member"), async () => {
+        await loginUserWithRole(document.getElementById("login-email-phone").value, document.getElementById("login-password").value, "client", nextUrl);
+      });
+
+      guardFormSubmit(document.getElementById("form-register-member"), async () => {
+        await registerUser(
+          document.getElementById("reg-name").value,
+          document.getElementById("reg-email").value,
+          document.getElementById("reg-phone").value,
+          document.getElementById("reg-password").value,
+          nextUrl
+        );
+      });
+
+      guardFormSubmit(document.getElementById("form-forgot-step1"), async () => {
+        const phone = document.getElementById("forgot-phone").value.trim();
+        if (!phone) { showToast("Masukkan nomor HP dulu!", "error"); return; }
+        const res = await sendGasRequest("requestPasswordReset", { member_id: phone });
+        if (res && res.status === "success") {
+          showToast(res.message, "success");
+          document.getElementById("forgot-phone-confirm").value = phone;
+          document.getElementById("form-forgot-step1").classList.add("hidden");
+          document.getElementById("form-forgot-step2").classList.remove("hidden");
+        } else {
+          showToast(res ? res.message : "Gagal mengirim kode reset.", "error");
+        }
+      });
+
+      guardFormSubmit(document.getElementById("form-forgot-step2"), async () => {
+        const phone = document.getElementById("forgot-phone-confirm").value;
+        const code = document.getElementById("forgot-code").value.trim();
+        const newPassword = document.getElementById("forgot-new-password").value;
+        const res = await sendGasRequest("confirmPasswordReset", { member_id: phone, code, new_password: newPassword });
+        if (res && res.status === "success") {
+          currentUser = res.user;
+          localStorage.setItem("REREPHOTO_USER", JSON.stringify(currentUser));
+          showToast(res.message, "success");
+          closeForgotPasswordModal();
+          setTimeout(() => window.location.href = "client.html", 800);
+        } else {
+          showToast(res ? res.message : "Gagal mengganti password.", "error");
+        }
+      });
+    });
+  </script>
+</body>
+</html>

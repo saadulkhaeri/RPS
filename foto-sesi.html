@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unduh Foto — Rere Photo</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&display=swap');
+    body { font-family: 'Montserrat', sans-serif; background: #f1eedb; color: #0F172A; overflow-x: hidden; }
+    .font-display { font-family: 'Montserrat', sans-serif; font-weight: 900; }
+
+    .dl-card {
+      background: #fff;
+      border-radius: 1.5rem;
+      box-shadow: 0 20px 40px -12px rgba(15, 23, 42, .15);
+      overflow: hidden;
+    }
+    .dl-img-wrap { position: relative; background: #e9e6d2; overflow: hidden; }
+    .dl-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .btn-download {
+      display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+      background: #3a5c37; color: #fff; font-weight: 900; font-size: .8rem;
+      padding: .85rem 1.5rem; border-radius: 1rem; border: none; cursor: pointer;
+      letter-spacing: .05em; transition: all .2s;
+      box-shadow: 0 8px 20px rgba(58, 92, 55, .3);
+    }
+    .btn-download:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(58, 92, 55, .4); }
+    .btn-download:active { transform: translateY(0); }
+    .btn-drive {
+      display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+      background: #feb702; color: #1c1917; font-weight: 900; font-size: .8rem;
+      padding: .85rem 1.5rem; border-radius: 1rem; text-decoration: none;
+      box-shadow: 3px 3px 0 #e0a000; transition: all .2s;
+    }
+    .btn-drive:hover { transform: translateY(-2px); }
+    .btn-back {
+      display: inline-flex; align-items: center; gap: .4rem;
+      color: #fff; font-weight: 700; font-size: .75rem; text-decoration: none;
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);
+      padding: .5rem 1rem; border-radius: .7rem; transition: background .2s;
+    }
+    .btn-back:hover { background: rgba(255,255,255,.2); }
+
+    .photo-item {
+      background: #fff; border-radius: 1.25rem; overflow: hidden;
+      box-shadow: 0 10px 24px -10px rgba(15,23,42,.18);
+      transition: all .25s;
+    }
+    .photo-item:hover { transform: translateY(-4px); box-shadow: 0 18px 32px -12px rgba(15,23,42,.28); }
+    .photo-item .img-box { aspect-ratio: 4/3; overflow: hidden; background: #e9e6d2; }
+    .photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s; }
+    .photo-item:hover img { transform: scale(1.04); }
+
+    @keyframes dlspin { to { transform: rotate(360deg); } }
+    .dl-spinner { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: dlspin .8s linear infinite; display: inline-block; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- TOP BAR -->
+  <header style="background:#3a5c37; border-bottom:2px solid #2d4a2c; position:sticky; top:0; z-index:50; box-shadow:0 4px 16px rgba(58,92,55,.35);">
+    <div style="max-width:760px; margin:0 auto; padding:.7rem 1.25rem; display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+      <a href="client.html" class="btn-back" style="display:inline-flex;">← <span>Kembali ke Akun</span></a>
+      <div style="display:flex; align-items:center; gap:.5rem; color:#fff; font-weight:900; font-size:.9rem; letter-spacing:.04em;">
+        📸 <span>RERE PHOTO</span>
+      </div>
+      <div style="width:90px;"></div>
+    </div>
+  </header>
+
+  <main class="flex-grow w-full" style="max-width:760px; margin:0 auto; padding:1.75rem 1.25rem 3rem;">
+
+    <!-- STATUS: FOTO TIDAK DITEMUKAN -->
+    <div id="state-notfound" class="hidden text-center py-16">
+      <div style="font-size:3rem; margin-bottom:1rem; opacity:.6;">🗑️</div>
+      <h1 class="font-display" style="font-size:1.5rem; color:#3a5c37;">Photos not found</h1>
+      <p style="font-size:.85rem; color:#64748b; margin-top:.5rem;">Link sesi tidak valid atau sudah tidak tersedia. Coba lagi lewat menu Galeri di akunmu.</p>
+      <a href="client.html" class="btn-drive" style="margin-top:1.25rem;">← Kembali ke Akun Saya</a>
+    </div>
+
+    <div id="state-main">
+
+      <!-- HERO -->
+      <section class="text-center mb-8">
+        <div style="font-size:.7rem; font-weight:800; color:#df4d00; letter-spacing:.2em; text-transform:uppercase; margin-bottom:.4rem;" id="hero-tag">Rere Photo Studio</div>
+        <h1 class="font-display" style="font-size:clamp(1.6rem,5vw,2.2rem); color:#3a5c37; line-height:1.15;">
+          Your Photos are Ready! 🎉
+        </h1>
+        <p style="font-size:.85rem; color:#64748b; margin-top:.6rem;" id="hero-sub">
+          Download foto sesi <b style="color:#0F172A;">—</b> di bawah.
+        </p>
+      </section>
+
+      <!-- FOTO UTAMA + AKSI -->
+      <section class="dl-card mb-6">
+        <div class="dl-img-wrap" style="aspect-ratio:4/3;">
+          <img id="main-photo" src="" alt="Foto sesi" class="dl-img">
+        </div>
+        <div style="padding:1.1rem 1.25rem; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.75rem;">
+          <div>
+            <div style="font-weight:900; color:#0F172A; font-size:.95rem;" id="main-title">Foto Sesi</div>
+            <div style="font-size:.72rem; color:#64748b;" id="main-sub">Sesi foto Rere Photo</div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:.6rem; align-items:center;">
+            <button id="btn-dl-main" class="btn-download" onclick="dlMain()" style="display:none;">
+              <span>⬇️ Download Photo</span>
+            </button>
+            <a id="btn-drive-top" href="#" target="_blank" rel="noopener" class="btn-drive">📁 Buka Folder Drive ↗</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- SEMUA FOTO (tampil kalau ada foto tambahan) -->
+      <section class="mb-6" id="photos-section">
+        <div class="flex items-center gap-2 mb-3">
+          <span style="font-size:1.1rem;">📷</span>
+          <h2 class="font-display" style="font-size:1.1rem; color:#3a5c37; text-transform:uppercase;">Semua Foto</h2>
+        </div>
+        <div id="photos-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+        <div id="photos-empty" class="hidden text-center py-8 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+          <div style="font-size:2rem; margin-bottom:.5rem;">📭</div>
+          <p style="font-size:.8rem; color:#64748b;">Foto asli tersimpan lengkap di folder Google Drive sesimu.</p>
+        </div>
+      </section>
+
+      <!-- INFO FOLDER GOOGLE DRIVE -->
+      <section class="dl-card mb-6" id="drive-section">
+        <div style="padding:1.25rem; text-align:center;">
+          <div style="font-size:1.6rem; margin-bottom:.4rem;">📁</div>
+          <h2 class="font-display" style="font-size:1rem; color:#3a5c37; text-transform:uppercase; margin-bottom:.3rem;">Unduh Semua Foto</h2>
+          <p style="font-size:.78rem; color:#64748b; margin-bottom:1rem;">Semua file foto asli sesimu tersimpan lengkap di folder Google Drive. Buka folder lalu download — di HP tinggal tekan lama fotonya untuk menyimpan.</p>
+          <a id="drive-link" href="#" target="_blank" rel="noopener" class="btn-drive">📁 Buka Folder Google Drive ↗</a>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- TOAST -->
+  <div id="dl-toast" style="position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(120px); background:#0F172A; color:#fff; font-size:.8rem; font-weight:700; padding:.8rem 1.4rem; border-radius:999px; box-shadow:0 10px 30px rgba(0,0,0,.35); transition:transform .35s; z-index:100; display:flex; align-items:center; gap:.5rem; max-width:92vw;">
+    <span id="dl-toast-icon">✅</span><span id="dl-toast-msg">Download dimulai!</span>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    // ── State ────────────────────────────────────────────────
+    let trx = null;
+    let photoList = [];
+    let busy = false;
+
+    // ── Toast ────────────────────────────────────────────────
+    let toastTimer = null;
+    function showToast2(msg, icon) {
+      document.getElementById("dl-toast-msg").textContent = msg;
+      document.getElementById("dl-toast-icon").textContent = icon || "✅";
+      document.getElementById("dl-toast").style.transform = "translateX(-50%) translateY(0)";
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        document.getElementById("dl-toast").style.transform = "translateX(-50%) translateY(120px)";
+      }, 2600);
+    }
+
+    // ── Unduh file (coba fetch → blob → download; fallback buka tab) ──
+    async function downloadFile(url, filename) {
+      if (!url) { showToast2("Tidak ada file untuk diunduh.", "⚠️"); return; }
+      if (busy) return;
+      busy = true;
+      showToast2("Download dimulai! Cek folder download kamu.", "⬇️");
+      try {
+        if (String(url).startsWith("data:")) {
+          const a = document.createElement("a");
+          a.href = url; a.download = filename;
+          document.body.appendChild(a); a.click(); a.remove();
+          return;
+        }
+        const res = await fetch(url, { mode: "cors" });
+        if (res.ok) {
+          const blob = await res.blob();
+          const objUrl = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = objUrl; a.download = filename;
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function () { URL.revokeObjectURL(objUrl); }, 6000);
+        } else {
+          window.open(url, "_blank", "noopener");
+        }
+      } catch (e) {
+        window.open(url, "_blank", "noopener");
+      } finally {
+        setTimeout(function () { busy = false; }, 1200);
+      }
+    }
+
+    function fileExt(url) {
+      const m = String(url).split("?")[0].match(/\.(jpe?g|png|webp|gif|heic|pdf)$/i);
+      return m ? m[1].toLowerCase() : "jpg";
+    }
+    function safeName(s) { return String(s).replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "foto"; }
+
+    function dlMain() {
+      const url = (trx && (trx.cover_url || (Array.isArray(trx.photos) && trx.photos[0]))) || "";
+      downloadFile(url, safeName(trx ? trx.package_name : "foto-sesi") + "-rere-photo." + fileExt(url));
+    }
+
+    function dlPhoto(i) {
+      const url = photoList[i];
+      downloadFile(url, "foto-" + (i + 1) + "-rere-photo." + fileExt(url));
+    }
+
+    // ── Render ───────────────────────────────────────────────
+    function render() {
+      const notFound = document.getElementById("state-notfound");
+      const main = document.getElementById("state-main");
+      if (!trx) {
+        notFound.classList.remove("hidden");
+        main.classList.add("hidden");
+        return;
+      }
+      notFound.classList.add("hidden");
+      main.classList.remove("hidden");
+
+      document.getElementById("hero-tag").textContent = (trx.package_name || "Sesi Foto") + " · Rere Photo";
+      document.getElementById("hero-sub").innerHTML =
+        "Download foto sesi <b style='color:#0F172A;'>" + escapeHtml(trx.package_name || "Sesi Foto") + "</b> di bawah.";
+
+      // Kumpulkan foto: cover + daftar photos (unik)
+      const seen = {};
+      photoList = [];
+      if (trx.cover_url) { seen[trx.cover_url] = 1; photoList.push(trx.cover_url); }
+      (trx.photos || []).forEach(function (u) { if (!seen[u]) { seen[u] = 1; photoList.push(u); } });
+
+      const mainImg = document.getElementById("main-photo");
+      const mainTitle = document.getElementById("main-title");
+      const mainSub = document.getElementById("main-sub");
+      const hasPhotos = photoList.length > 0;
+      if (hasPhotos) {
+        mainImg.src = safeImageUrl(photoList[0]);
+        mainImg.onerror = function () { mainImg.src = RERE_GALLERY_FALLBACK_SVG; };
+        mainTitle.textContent = (trx.package_name || "Sesi Foto") + " — Foto Utama";
+        mainSub.textContent = (trx.timestamp || "").split(" ")[0] + " · +" + (Number(trx.points_added) || 0) + " Poin";
+      } else {
+        mainImg.src = RERE_GALLERY_FALLBACK_SVG;
+        mainImg.onerror = null;
+        mainTitle.textContent = (trx.package_name || "Sesi Foto");
+        mainSub.textContent = "Foto asli tersedia di folder Google Drive di bawah.";
+      }
+      // Tombol download foto langsung hanya kalau ada foto
+      document.getElementById("btn-dl-main").style.display = hasPhotos ? "" : "none";
+
+      // Grid semua foto (tampilkan mulai foto ke-2 agar tidak dobel dengan hero)
+      const grid = document.getElementById("photos-grid");
+      const empty = document.getElementById("photos-empty");
+      const rest = photoList.slice(1);
+      if (rest.length) {
+        empty.classList.add("hidden");
+        grid.classList.remove("hidden");
+        grid.innerHTML = rest.map(function (u, i) {
+          const idx = i + 1;
+          return '<div class="photo-item">' +
+            '<div class="img-box"><img src="' + safeImageUrl(u) + '" alt="Foto ' + idx + '" loading="lazy" onerror="this.src=RERE_GALLERY_FALLBACK_SVG"></div>' +
+            '<div style="padding:.7rem .8rem; display:flex; align-items:center; justify-content:space-between; gap:.5rem;">' +
+              '<span style="font-size:.72rem; font-weight:800; color:#0F172A;">Foto ' + idx + '</span>' +
+              '<button onclick="dlPhoto(' + idx + ')" style="flex-shrink:0; background:#3a5c37; color:#fff; font-weight:800; font-size:.68rem; padding:.45rem .8rem; border-radius:.6rem; border:none; cursor:pointer;">⬇️ Download</button>' +
+            '</div></div>';
+        }).join("");
+      } else {
+        grid.classList.add("hidden");
+        empty.classList.remove("hidden");
+      }
+
+      // Folder drive (tombol atas & bawah)
+      const driveUrl = trx.gdrive_url ? safeUrl(trx.gdrive_url) : "#";
+      document.getElementById("btn-drive-top").href = driveUrl;
+      document.getElementById("drive-link").href = driveUrl;
+      document.getElementById("drive-section").style.display = trx.gdrive_url ? "" : "none";
+    }
+
+    // ── Init ─────────────────────────────────────────────────
+    document.addEventListener("DOMContentLoaded", function () {
+      initMockDb();
+      const user = JSON.parse(localStorage.getItem("REREPHOTO_USER") || "null");
+      if (!user || user.role !== "client") {
+        location.href = "login-member.html";
+        return;
+      }
+      const params = new URLSearchParams(location.search);
+      const sesiId = params.get("sesi") || "";
+      const db = JSON.parse(localStorage.getItem("REREPHOTO_MOCK_DB") || "null");
+      if (sesiId && db && Array.isArray(db.transactions)) {
+        trx = db.transactions.find(function (t) {
+          return String(t.trx_id).trim() === String(sesiId).trim() &&
+                 String(t.member_id).trim() === String(user.id).trim();
+        }) || null;
+      }
+      render();
+    });
+  </script>
+</body>
+</html>

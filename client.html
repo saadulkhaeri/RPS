@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Member - Rere Photo</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=JetBrains+Mono:wght@400;600&display=swap');
+    body { font-family: 'Montserrat', sans-serif; background-color: #f1eedb; color: #0F172A; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    .photo-stack { position: relative; aspect-ratio: 1/1; cursor: pointer; border-radius: 1rem; overflow: hidden; background: #e9e6d2; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: all 0.3s ease; }
+    .photo-stack:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(58, 92, 55, 0.18); }
+    .photo-stack .layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .gallery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+    @media (min-width: 640px) { .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; } }
+    @media (min-width: 1024px) { .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.25rem; } }
+
+    #idle-warning { transition: opacity 0.4s ease; }
+
+    .avatar-img { object-fit: cover; }
+    .avatar-fallback { display: none; }
+    .avatar-img[src=""] + .avatar-fallback,
+    .avatar-img:not([src]) + .avatar-fallback { display: flex; }
+    .avatar-img[src=""] { display: none; }
+
+    /* ── RESPONSIVE GLOBAL ─────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    img { max-width: 100%; height: auto; }
+
+    /* Tabel scroll horizontal di mobile */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* Card grid responsif */
+    .grid-responsive {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    /* Stack jadi kolom di mobile */
+    @media (max-width: 640px) {
+      .sm-stack { flex-direction: column !important; }
+      .sm-full  { width: 100% !important; }
+      .sm-hide  { display: none !important; }
+      .sm-text-sm { font-size: .82rem !important; }
+      .sm-p-sm  { padding: .75rem !important; }
+
+      /* Tabel di mobile: horizontal scroll */
+      table { font-size: .75rem; }
+      th, td { padding: .5rem .6rem !important; white-space: nowrap; }
+
+      /* Modal lebih kecil */
+      .modal-box { padding: 1.25rem !important; margin: .75rem !important; }
+
+      /* Navbar tombol lebih kecil */
+      .nav-btn { padding: .4rem .7rem !important; font-size: .7rem !important; }
+    }
+
+    @media (max-width: 768px) {
+      .md-stack { flex-direction: column !important; }
+      .md-full  { width: 100% !important; }
+    }
+    /* ─────────────────────────────────────────── */
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-[#edf5ed]0 selection:text-white">
+
+  <header style="background:#3a5c37;border-bottom:2px solid #2d4a2c;position:sticky;top:0;z-index:40;box-shadow:0 4px 16px rgba(58,92,55,.35);">
+    <div style="max-width:1100px;margin:0 auto;padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;">
+      <a href="index.html" style="text-decoration:none;display:flex;align-items:center;gap:.5rem;">
+        <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjE3MTAiIGhlaWdodD0iNzE2Ij4KCjxwYXRoIGQ9Ik0wIDAgQzM3LjU5OTM3NSAtMC4wNjE4NzUgNzUuMTk4NzUgLTAuMTIzNzUgMTEzLjkzNzUgLTAuMTg3NSBDMTI1Ljc2OTcyNDEyIC0wLjIxNDgxMjAxIDEzNy42MDE5NDgyNCAtMC4yNDIxMjQwMiAxNDkuNzkyNzI0NjEgLTAuMjcwMjYzNjcgQzE2NC4zNDI4OTU1MSAtMC4yODM4MTM0OCAxNjQuMzQyODk1NTEgLTAuMjgzODEzNDggMTcxLjE3NDA4NzUyIC0wLjI4NjMzMTE4IEMxNzUuOTAyMTk5MzMgLTAuMjg5MTA0MDQgMTgwLjYzMDIwODA3IC0wLjMwMDI1NzM1IDE4NS4zNTgyOTE2MyAtMC4zMTY3MjY2OCBDMTkxLjQyMDA4OTI1IC0wLjMzNzU1NjYzIDE5Ny40ODE3NDA1NSAtMC4zNDM0Mjc1MyAyMDMuNTQzNTcwNjQgLTAuMzM5MjE2ODMgQzIwNS43NDg5ODIyNyAtMC4zNDAwOTUxNSAyMDcuOTU0Mzk5OSAtMC4zNDU4OTI2IDIxMC4xNTk3ODAzOCAtMC4zNTc2NDUzOSBDMjMwLjE1NzU0NzkzIC0wLjQ1OTEyMzA0IDI1MC4xMDYxNTQyIDEuMTQxMDU2NTQgMjY5LjYyNSA1LjY4NzUgQzI3MC43MzM0MzI2MiA1Ljk0MDk2MTkxIDI3MS44NDE4NjUyMyA2LjE5NDQyMzgzIDI3Mi45ODM4ODY3MiA2LjQ1NTU2NjQxIEMzMDguNDc2NjE0NjggMTQuODk3MDUyNzEgMzQ0LjU1NjE3MjA0IDMyLjE2MTE0ODg2IDM2OCA2MSBDMzY4Ljc2MDU0Njg4IDYxLjkyMjk2ODc1IDM2OS41MjEwOTM3NSA2Mi44NDU5Mzc1IDM3MC4zMDQ2ODc1IDYzLjc5Njg3NSBDMzkzLjIwNDc3MzY3IDkyLjE3MDAyMzAyIDQwMy40MDU1NDE5NSAxMjYuMzY1OTQxMTYgNDAzLjMxNTY3MzgzIDE2Mi41Mjk1NDEwMiBDNDAzLjMxMjUyNDk1IDE2NS4xNjY2MDQwOSA0MDMuMzM2MDI3NCAxNjcuODAyNTI4NTEgNDAzLjM2MTMyODEyIDE3MC40Mzk0NTMxMiBDNDAzLjQxODg3MzMzIDE4NS42MzEyOTk3MiA0MDEuODk2MzQ5MjQgMjAwLjY1MzY2ODQyIDM5Ny4yNSAyMTUuMTg3NSBDMzk2Ljk5Mzk1OTk2IDIxNi4wMTAwODMwMSAzOTYuNzM3OTE5OTIgMjE2LjgzMjY2NjAyIDM5Ni40NzQxMjEwOSAyMTcuNjgwMTc1NzggQzM4My40MzE2OTUyMyAyNTguMzY0MDUzOTMgMzU1LjI4NDczNzExIDI4Ny4xMjgxODg1NiAzMTggMzA3IEMzMjEuMDIzNjM5OTggMzEyLjg4NzM3NTkzIDMyNC41MDc2NDg1MiAzMTguMTczMDgxMzQgMzI4LjQ0OTIxODc1IDMyMy40ODA0Njg3NSBDMzMxLjgxNTMxNzQyIDMyOC4wNzAxMDIyNiAzMzQuOTg5MzkwMDkgMzMyLjc5MjYzNzg3IDMzOC4xODc1IDMzNy41IEMzMzguODM0NzcwNTEgMzM4LjQ1MjM3NTQ5IDMzOS40ODIwNDEwMiAzMzkuNDA0NzUwOTggMzQwLjE0ODkyNTc4IDM0MC4zODU5ODYzMyBDMzQxLjQ2MjcyNTg4IDM0Mi4zMTk5Mjk5OSAzNDIuNzc2MjAyOTYgMzQ0LjI1NDA5MzEzIDM0NC4wODkzNTU0NyAzNDYuMTg4NDc2NTYgQzM0Ni45NjczMjQxNyAzNTAuNDIzNDIyNTggMzQ5Ljg1NzYyMDg1IDM1NC42NDk4ODc4IDM1Mi43NSAzNTguODc1IEMzNTMuMjgxODE4ODUgMzU5LjY1MjA2Mjk5IDM1My44MTM2Mzc3IDM2MC40MjkxMjU5OCAzNTQuMzYxNTcyMjcgMzYxLjIyOTczNjMzIEMzNTkuMTE3MTk5NzUgMzY4LjE3NTg3MDIgMzYzLjg4NTIzNTUyIDM3NS4xMTM0NDEyNCAzNjguNjU3MjI2NTYgMzgyLjA0ODMzOTg0IEMzNzAuOTM5MDg1MTkgMzg1LjM2NDkxNzY0IDM3My4yMTk0NTc1NSAzODguNjgyNTE3MSAzNzUuNSAzOTIgQzM3Ni40MTY2NTk3NiAzOTMuMzMzMzM4MDggMzc3LjMzMzMyNjQyIDM5NC42NjY2NzE0MiAzNzguMjUgMzk2IEMzODMuNzUgNDA0IDM4My43NSA0MDQgMzg1LjEyNTQ4ODI4IDQwNi4wMDA3MzI0MiBDMzg2LjA0MDQ5OTcgNDA3LjMzMTY0MzM1IDM4Ni45NTU1Mzg2OSA0MDguNjYyNTM1MzQgMzg3Ljg3MDYwNTQ3IDQwOS45OTM0MDgyIEMzOTAuMTg3ODI1ODEgNDEzLjM2MzY0ODA0IDM5Mi41MDQ1MzkzMiA0MTYuNzM0MjM0MzMgMzk0LjgyMDMxMjUgNDIwLjEwNTQ2ODc1IEMzOTUuMjg1MjYxMjMgNDIwLjc4MjA2NTQzIDM5NS43NTAyMDk5NiA0MjEuNDU4NjYyMTEgMzk2LjIyOTI0ODA1IDQyMi4xNTU3NjE3MiBDMzk3LjE1MDU0MTMzIDQyMy40OTY4NTAxOCAzOTguMDcxMjg4NDMgNDI0LjgzODMxNDA0IDM5OC45OTE0NTUwOCA0MjYuMTgwMTc1NzggQzQwMS4yMDY5NDMzMyA0MjkuNDA3NzM2NjEgNDAzLjQzNDc0MTkxIDQzMi42MjUyODM2IDQwNS42OTE0MDYyNSA0MzUuODI0MjE4NzUgQzQwNi4xMTI3Njg1NSA0MzYuNDI0MDM1NjQgNDA2LjUzNDEzMDg2IDQzNy4wMjM4NTI1NCA0MDYuOTY4MjYxNzIgNDM3LjY0MTg0NTcgQzQwOC4xMTQ2ODYzNyA0MzkuMjcxNDk1MDEgNDA5LjI2NjE1ODcgNDQwLjg5NzU5MDA0IDQxMC40MTc5Njg3NSA0NDIuNTIzNDM3NSBDNDEyIDQ0NSA0MTIgNDQ1IDQxMiA0NDcgQzM5NC40NTgzMTcyIDQ0Ny4zNTExMjY2NCAzNzYuOTE3NzM3NjEgNDQ3LjYxNTI1Njc5IDM1OS4zNzMzMzk2NSA0NDcuNzc3MTgyNTggQzM1MS4yMjYxMjkyMiA0NDcuODU0MzgzMzQgMzQzLjA4MTEwNzU2IDQ0Ny45NTk1Mjg5OCAzMzQuOTM1MzAyNzMgNDQ4LjEzMTU5MTggQzMyNy44MzEzMzgzMiA0NDguMjgxNTc1ODEgMzIwLjcyODk1OTA3IDQ0OC4zNzc5Nzk0NSAzMTMuNjIzNDU1MzUgNDQ4LjQxMTMyNzQyIEMzMDkuODYzNTMxMiA0NDguNDMwODEyMDggMzA2LjEwODEzOTQzIDQ0OC40NzYyMzEwOSAzMDIuMzQ5Njc2MTMgNDQ4LjU4NTk1MDg1IEMyNzcuNjU5Mjg1MzMgNDQ5LjI3OTI2ODkxIDI3Ny42NTkyODUzMyA0NDkuMjc5MjY4OTEgMjcxLjc4MzU5OTg1IDQ0My43NTYzNzgxNyBDMjY5LjI0NTc1MTkgNDQwLjY5MzQ0NDExIDI2Ny40MzA0ODA3MiA0MzcuNDYzNjExMDkgMjY1LjgzNjU1NzM5IDQzMy44MzAzMDg5MSBDMjY0LjYxMjkxNTQgNDMxLjE1MzA5NTI4IDI2Mi45NDc4MDY3NCA0MjguODMyOTcyOSAyNjEuMjUgNDI2LjQzNzUgQzI2MC42MTk2NDg0NCA0MjUuNDc4NDM3NSAyNTkuOTg5Mjk2ODcgNDI0LjUxOTM3NSAyNTkuMzM5ODQzNzUgNDIzLjUzMTI1IEMyNTYuMjE5MzA4MzcgNDE4Ljc5NjA2MDA1IDI1My4wMDk5OTA0MiA0MTQuMTIwODg3NzUgMjQ5LjgxMjUgNDA5LjQzNzUgQzI0OS4xNjMyOTU5IDQwOC40ODYzMzMwMSAyNDguNTE0MDkxOCA0MDcuNTM1MTY2MDIgMjQ3Ljg0NTIxNDg0IDQwNi41NTUxNzU3OCBDMjQxLjU3MDI2NjYxIDM5Ny4zNjU0NzI5NyAyMzUuMjg2NTQ3NjQgMzg4LjE4MTc3MDI2IDIyOSAzNzkgQzIyNi44NzQ3NjA0NSAzNzUuODk1OTk3MjQgMjI0Ljc0OTc1MTc1IDM3Mi43OTE4MzY2OSAyMjIuNjI1IDM2OS42ODc1IEMyMjIuMDk5NTQ1OSAzNjguOTE5OTQzODUgMjIxLjU3NDA5MTggMzY4LjE1MjM4NzcgMjIxLjAzMjcxNDg0IDM2Ny4zNjE1NzIyNyBDMjE4LjAyNDExMjIyIDM2Mi45NjQ4Mzc2IDIxNS4wMjExNzcyNyAzNTguNTY0MzA1NSAyMTIuMDIzNDM3NSAzNTQuMTYwMTU2MjUgQzIxMS4zNTM2MDg0IDM1My4xNzYzNTk4NiAyMTAuNjgzNzc5MyAzNTIuMTkyNTYzNDggMjA5Ljk5MzY1MjM0IDM1MS4xNzg5NTUwOCBDMjA4LjY5OTAwMDI1IDM0OS4yNzY5Mjk0NiAyMDcuNDA1MDE2MSAzNDcuMzc0NDQ4OTYgMjA2LjExMTgxNjQxIDM0NS40NzE0MzU1NSBDMjAzLjQ3ODE3NzgxIDM0MS42MDI0NTI0OSAyMDAuODMzOTE2NTYgMzM3Ljc1NjE0ODM4IDE5OC4wNjI1IDMzMy45ODQzNzUgQzE5NiAzMzEgMTk2IDMzMSAxOTYgMzI5IEMxNzMuMjMgMzI5IDE1MC40NiAzMjkgMTI3IDMyOSBDMTI3IDM2Ny45NCAxMjcgNDA2Ljg4IDEyNyA0NDcgQzg1LjA5IDQ0NyA0My4xOCA0NDcgMCA0NDcgQzAgMjk5LjQ5IDAgMTUxLjk4IDAgMCBaIE0xMjcgMTAwIEMxMjcgMTQzLjIzIDEyNyAxODYuNDYgMTI3IDIzMSBDMTQzLjg2MDkzNzUgMjMxLjA2MTg3NSAxNDMuODYwOTM3NSAyMzEuMDYxODc1IDE2MS4wNjI1IDIzMS4xMjUgQzE2NC41NTk4MDcxMyAyMzEuMTQzMjA4MDEgMTY4LjA1NzExNDI2IDIzMS4xNjE0MTYwMiAxNzEuNjYwNDAwMzkgMjMxLjE4MDE3NTc4IEMyMTguMDc3NDkzNTggMjMyLjMyNTQxMzM0IDIxOC4wNzc0OTM1OCAyMzIuMzI1NDEzMzQgMjU3LjgyMDMxMjUgMjExLjMxMjUgQzI3MC44MTU2NDY3MyAxOTcuNTI1MzM1MzcgMjc1LjU2MTAwNTgxIDE4MS44MjQ4NDA1OSAyNzUuMzQ2OTIzODMgMTYzLjAzNTg4ODY3IEMyNzQuODY1ODgwMDggMTQ3LjEyNjI4NTczIDI2OS43NzI3NjA4OSAxMzAuNjQzNDUzMTEgMjU4LjM3MTA5Mzc1IDExOS4wMTk1MzEyNSBDMjQyLjA1NDMxNzI4IDEwNS4xMjIwNDYxOCAyMjEuNjE3MjA3IDk5Ljc4Mjk3MzM3IDIwMC40NTA5Mjc3MyA5OS44ODY0NzQ2MSBDMTk5LjYzNzA0MzcgOTkuODg2MzU0MDcgMTk4LjgyMzE1OTY2IDk5Ljg4NjIzMzU0IDE5Ny45ODQ2MTI0NiA5OS44ODYxMDkzNSBDMTk1LjM4NDI0MzggOTkuODg2ODQ3OTQgMTkyLjc4Mzk0OTM3IDk5Ljg5NDQyNzQyIDE5MC4xODM1OTM3NSA5OS45MDIzNDM3NSBDMTg4LjU2NDQ5NDE3IDk5LjkwMzgxNjQ0IDE4Ni45NDUzOTQxIDk5LjkwNDgzNTE0IDE4NS4zMjYyOTM5NSA5OS45MDUzOTU1MSBDMTc5LjM2MzM1NTMxIDk5LjkxMDYxMDQ1IDE3My40MDA0MjY5IDk5LjkyNDU3MTY5IDE2Ny40Mzc1IDk5LjkzNzUgQzE1NC4wOTMxMjUgOTkuOTU4MTI1IDE0MC43NDg3NSA5OS45Nzg3NSAxMjcgMTAwIFogIiBmaWxsPSIjRkZGRkZGIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTAsMTE0KSIvPgoKPHBhdGggZD0iTTAgMCBDMS4zNzczODM0MiAwLjAwMDgxNTczIDEuMzc3MzgzNDIgMC4wMDA4MTU3MyAyLjc4MjU5Mjc3IDAuMDAxNjQ3OTUgQzMzLjI5NjY3NSAwLjA4NDM3NjAyIDYxLjkxNjg0ODYgNS41MTI3MzU4MyA4OS42ODc1IDE4LjM3NSBDOTAuMzI2MjMwNDcgMTguNjY0ODc3OTMgOTAuOTY0OTYwOTQgMTguOTU0NzU1ODYgOTEuNjIzMDQ2ODggMTkuMjUzNDE3OTcgQzEwNy4xNzU1NDQwOSAyNi4zNjE1ODk3MiAxMzMuNzU1NTg1MDEgNDAuNTExMTcwMDMgMTQxLjY4NzUgNTYuMzc1IEMxNDIuMTI1NzgxMjUgNTUuNjQ3OTY4NzUgMTQyLjU2NDA2MjUgNTQuOTIwOTM3NSAxNDMuMDE1NjI1IDU0LjE3MTg3NSBDMTU0Ljg4NjIxMTg0IDM1LjM1MjY1MTk2IDE3MC4wOTg3NDA3NiAyNC42OTc5NDI3NSAxOTEuNjg3NSAxOS4zNzUgQzIxMi4yMTcwOTU5MyAxNS42ODI5NjQ5OSAyMzQuMjM1NDIzMyAxOC44NjgxODAwNSAyNTEuOTM3NSAzMC4xMjUgQzI2OC4yNzUyMjMwNiA0MS42NDEwNDk4NSAyNzcuNjc2OTYzMDEgNTcuNzIzMjU2MTMgMjgxLjE4MzU5Mzc1IDc3LjMyMDMxMjUgQzI4NC4xNDg0MzA1OCA5OC42MjMyMTQxNiAyNzkuNzgxMTEwMjkgMTE5LjA3NzIwMzgyIDI2Ni45MjU3ODEyNSAxMzYuNDcyNjU2MjUgQzI1Ni4wNzk3Njc3MSAxNTAuNTM2NTA5NzYgMjM5LjI0MTEwOTI4IDE1OS43MzgyNDgzNiAyMjEuNjg3NSAxNjIuMzc1IEMyMTcuMzUwMTIyNTYgMTYyLjY0NzU1ODc5IDIxMy4wMzIxNzAwNSAxNjIuNjU0ODk0NTIgMjA4LjY4NzUgMTYyLjYyNSBDMjA3LjAwMTQwNjI1IDE2Mi42MzY2MDE1NiAyMDcuMDAxNDA2MjUgMTYyLjYzNjYwMTU2IDIwNS4yODEyNSAxNjIuNjQ4NDM3NSBDMTk4Ljc2NjQwMzg4IDE2Mi42MzMyMTU5IDE5Mi45ODQ4MjE2NyAxNjIuMDU2MDY0NjggMTg2LjY4NzUgMTYwLjM3NSBDMTg2LjY2MjQ0Mzg1IDE2MS40NjMyOTEwMiAxODYuNjM3Mzg3NyAxNjIuNTUxNTgyMDMgMTg2LjYxMTU3MjI3IDE2My42NzI4NTE1NiBDMTg2LjUxNjM4MzQgMTY3Ljc2NTcxNTkgMTg2LjQxNjQ0OTQ1IDE3MS44NTg0NTM3MiAxODYuMzE1MTg1NTUgMTc1Ljk1MTE3MTg4IEMxODYuMjcyMjUzMDMgMTc3LjcxMjIwOTE4IDE4Ni4yMzA1NTUwMyAxNzkuNDczMjc3MDggMTg2LjE5MDE4NTU1IDE4MS4yMzQzNzUgQzE4Ni4xMzE0NTY0OCAxODMuNzg2NTUxNjUgMTg2LjA2ODA3NTg4IDE4Ni4zMzg1Nzk5OSAxODYuMDAzOTA2MjUgMTg4Ljg5MDYyNSBDMTg1Ljk4NzE5Mzc2IDE4OS42NTk4OTMxOSAxODUuOTcwNDgxMjYgMTkwLjQyOTE2MTM4IDE4NS45NTMyNjIzMyAxOTEuMjIxNzQwNzIgQzE4NS43ODQyOTMxOCAxOTcuNjU5MjA0OTggMTg1LjIyNTE3NzQyIDIwMy45MjI4NzA5NiAxODQuNjg3NSAyMTAuMzc1IEMxMDEuODU3NSAyMTAuMzc1IDE5LjAyNzUgMjEwLjM3NSAtNjYuMzEyNSAyMTAuMzc1IEMtNTcuMzc4MTY4ODEgMjMyLjcxMDgyNzk3IC00Ni40NzM3NDM4MSAyNDcuNDE2OTk2MjYgLTI0LjQzNzUgMjU3LjE4NzUgQzMuMTc1MTU3NTEgMjY3Ljg4NDYyODcxIDM2LjI2MTMwMTc4IDI2Ny43NzA4Njg0NCA2My42MjQ1MTE3MiAyNTYuMjk3ODUxNTYgQzczLjQxNzMxODM3IDI1MS45MTcxNjQwOSA4Mi4zMjE3ODcxNiAyNDYuMzgwNDIwMzkgOTAuNTI4MzIwMzEgMjM5LjQ3MzYzMjgxIEM5My42NDA5OTQ2MSAyMzYuOTA0NjAzNTMgOTQuNDU0MTYyMDggMjM2LjM3NSA5OC42ODc1IDIzNi4zNzUgQzEwMC45NTgyNTE5NSAyMzguMTc1NzgxMjUgMTAwLjk1ODI1MTk1IDIzOC4xNzU3ODEyNSAxMDMuNDI1NzgxMjUgMjQwLjY4NzUgQzEwNC4zMjg3Njk1MyAyNDEuNTk4ODY3MTkgMTA1LjIzMTc1NzgxIDI0Mi41MTAyMzQzNyAxMDYuMTYyMTA5MzggMjQzLjQ0OTIxODc1IEMxMDcuMTA4MTExNTUgMjQ0LjQyNDQ0MTcgMTA4LjA1NDA3NDg2IDI0NS4zOTk3MDIzNCAxMDkgMjQ2LjM3NSBDMTA5LjkyNDkwMjM0IDI0Ny4zMDk1NzAzMSAxMTAuODQ5ODA0NjkgMjQ4LjI0NDE0MDYyIDExMS44MDI3MzQzOCAyNDkuMjA3MDMxMjUgQzExNi4zNTIxMTExNyAyNTMuODMwNzc1OTcgMTIwLjc0NTIyMzc4IDI1OC41MzE5MDM2NiAxMjQuOTczMzg4NjcgMjYzLjQ0OTIxODc1IEMxMjguMjExMjM0NDMgMjY3LjA4Njg5NTM0IDEzMS43MTQzNTAzNCAyNzAuNDYzOTgxODEgMTM1LjE4NzUgMjczLjg3NSBDMTQwLjAwNjI1MTk1IDI3OC42MDc1NDg4NyAxNDQuNjQ3NjMwNjggMjgzLjM5Mjk0MzczIDE0OS4wNTMyMjI2NiAyODguNTEzNjcxODggQzE1MS40NjAxNTgyOSAyOTEuMjU1MDA0IDE1NC4wMjMyMjI1IDI5My44MjAwMDQxMiAxNTYuNjI1IDI5Ni4zNzUgQzE1Ny4zNjQ1OTk2MSAyOTcuMTA3ODMyMDMgMTU3LjM2NDU5OTYxIDI5Ny4xMDc4MzIwMyAxNTguMTE5MTQwNjIgMjk3Ljg1NTQ2ODc1IEMxNTkuMzA2MjMyMjkgMjk5LjAzMTAzNTI1IDE2MC40OTY1MDQ5OCAzMDAuMjAzMzg4MjYgMTYxLjY4NzUgMzAxLjM3NSBDMTQ3LjQ0NTg4MDI3IDMyNi40MTYxNTYxNCAxMTEuMTk2NjIyNjcgMzQyLjU4MjI0MjcxIDg0Ljc5MTAxNTYyIDM1MC4yMTE5MTQwNiBDODEuNzAyODYzNDYgMzUxLjA1NjIyMTY0IDc4LjYwNjY1OTQ0IDM1MS44NTE2ODEgNzUuNSAzNTIuNjI1IEM3NC41ODI5MTI2IDM1Mi44NTkxMjU5OCA3My42NjU4MjUyIDM1My4wOTMyNTE5NSA3Mi43MjA5NDcyNyAzNTMuMzM0NDcyNjYgQzU0LjM0MzI1NTQ1IDM1Ny42Njc1ODg1MyAzNS42MDAyNDUwNyAzNTguODc5OTEyOTIgMTYuNzc4MDc2MTcgMzU4Ljc2NjExMzI4IEMxMy42MjE3OTUxOCAzNTguNzQ5OTgzNjIgMTAuNDY2NzkwNTUgMzU4Ljc2NjExMTg1IDcuMzEwNTQ2ODggMzU4Ljc4NTE1NjI1IEMtMTEuMDA2MjkyNDcgMzU4LjgwNTAzNTM4IC0yOS4xNDY1MDU3IDM1Ny4xNjQ4NTcwOSAtNDYuOTM3NSAzNTIuNjI1IEMtNDcuOTY5MDcyMjcgMzUyLjM2NzUwOTc3IC00OS4wMDA2NDQ1MyAzNTIuMTEwMDE5NTMgLTUwLjA2MzQ3NjU2IDM1MS44NDQ3MjY1NiBDLTgwLjk5MjYyNTg1IDM0My45Mjk1MjQ5MiAtMTA5LjUwNTE3OTE2IDMzMC45NTQzNjMwMSAtMTMzLjMxMjUgMzA5LjM3NSBDLTEzNC4yNzY3MTg3NSAzMDguNTQyMjY1NjMgLTEzNS4yNDA5Mzc1IDMwNy43MDk1MzEyNSAtMTM2LjIzNDM3NSAzMDYuODUxNTYyNSBDLTE0Mi42ODA5OTE0NiAzMDEuMjA2MzIxMDEgLTE0OC4wOTUxMDAxMyAyOTUuMTYwNDE5ODYgLTE1My4zMTI1IDI4OC4zNzUgQy0xNTQuMDY0MDIzNDQgMjg3LjQyNzUzOTA2IC0xNTQuODE1NTQ2ODggMjg2LjQ4MDA3ODEyIC0xNTUuNTg5ODQzNzUgMjg1LjUwMzkwNjI1IEMtMTYxLjI5NDYxMjY3IDI3OC4xNjA4NDQ3MiAtMTY1LjkyMTgzOTI5IDI3MC41Mzk3NjA1NSAtMTcwLjMxMjUgMjYyLjM3NSBDLTE3MC44MzU4NTkzNyAyNjEuNDMzOTg0MzggLTE3MS4zNTkyMTg3NSAyNjAuNDkyOTY4NzUgLTE3MS44OTg0Mzc1IDI1OS41MjM0Mzc1IEMtMTgyLjkyNTQyNjE1IDIzOC44MTEzNjg4NiAtMTg5LjMyMjc5MjY5IDIxMy45MTYxMjM0NCAtMTg5LjU1MDc4MTI1IDE5MC40Njg3NSBDLTE4OS41NjA1NzUxIDE4OS42MzQ3MDEzOSAtMTg5LjU3MDM2ODk2IDE4OC44MDA2NTI3NyAtMTg5LjU4MDQ1OTU5IDE4Ny45NDEzMjk5NiBDLTE4OS43NDk4MjE0NSAxNjkuNzc1OTgwMDkgLTE4OS43Mzc5OTkxIDE1Mi4xMTQyOTk0NiAtMTg1LjMxMjUgMTM0LjM3NSBDLTE4NS4xMDM1MTA3NCAxMzMuNTE3OTM0NTcgLTE4NC44OTQ1MjE0OCAxMzIuNjYwODY5MTQgLTE4NC42NzkxOTkyMiAxMzEuNzc3ODMyMDMgQy0xNzcuNTc5MzYzNTMgMTAzLjYwNzE3MzEyIC0xNjMuMjc0NjYxMDYgNzguNDAyNjQ1MzIgLTE0My4zMTI1IDU3LjM3NSBDLTE0Mi44NDg5MjA5IDU2Ljg3ODg3MjA3IC0xNDIuMzg1MzQxOCA1Ni4zODI3NDQxNCAtMTQxLjkwNzcxNDg0IDU1Ljg3MTU4MjAzIEMtMTE2LjY4ODE0OTUzIDI5LjAxNTM0ODc3IC04My4yMTEwNzM1NiAxMi40NTU2MTc4OSAtNDcuNSA0LjU2MjUgQy00Ni42MTg3NjQ2NSA0LjM2NzYwOTg2IC00NS43Mzc1MjkzIDQuMTcyNzE5NzMgLTQ0LjgyOTU4OTg0IDMuOTcxOTIzODMgQy0yOS44ODYxNzI4OCAwLjg2MTc5NjA1IC0xNS4yMTYyNjE0NCAtMC4wMzQwNzcwNSAwIDAgWiBNLTUxLjMxMjUgMTA4LjM3NSBDLTU5LjY5NjU5NzAyIDExOC45NjYxNDY2NCAtNjguMzEyNSAxMzIuNDQ0ODIzMjggLTY4LjMxMjUgMTQ2LjM3NSBDLTIyLjExMjUgMTQ2LjM3NSAyNC4wODc1IDE0Ni4zNzUgNzEuNjg3NSAxNDYuMzc1IEM2Ny4zOTQxMzUwMiAxMjkuMjAxNTQwMDkgNjMuMjAzNTc0OTIgMTE3LjUzNTM3ODI5IDUwLjY4NzUgMTA1LjM3NSBDNTAuMDc1MTk1MzEgMTA0Ljc0MjA3MDMxIDQ5LjQ2Mjg5MDYyIDEwNC4xMDkxNDA2MyA0OC44MzIwMzEyNSAxMDMuNDU3MDMxMjUgQzM1LjEyNzE3MzExIDkwLjIxOTcxNjI0IDE2LjIwNzA2MTg1IDg2LjczMTQ2OTExIC0yLjEwODE1NDMgODYuOTA2NDk0MTQgQy0yMC43NDQ3MTY0OSA4Ny40NDYzNzc5MSAtMzguNjY4MzQzOTkgOTQuMjU2MDUzOTIgLTUxLjMxMjUgMTA4LjM3NSBaICIgZmlsbD0iI0ZGRkVGRSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTMzMC4zMTI1LDIwOC42MjUpIi8+Cgo8cGF0aCBkPSJNMCAwIEMxLjM3NzM4MzQyIDAuMDAwODE1NzMgMS4zNzczODM0MiAwLjAwMDgxNTczIDIuNzgyNTkyNzcgMC4wMDE2NDc5NSBDMzMuMjk2Njc1IDAuMDg0Mzc2MDIgNjEuOTE2ODQ4NiA1LjUxMjczNTgzIDg5LjY4NzUgMTguMzc1IEM5MC4zMjYyMzA0NyAxOC42NjQ4Nzc5MyA5MC45NjQ5NjA5NCAxOC45NTQ3NTU4NiA5MS42MjMwNDY4OCAxOS4yNTM0MTc5NyBDMTA1LjYyOTMxNTk0IDI1LjY1NDg5NTggMTE4LjA4NTg0OTAyIDM0LjI5NzE0Nzk2IDEyOS42ODc1IDQ0LjM3NSBDMTMxLjA3NTgyMDMxIDQ1LjU2MjIyNjU2IDEzMS4wNzU4MjAzMSA0NS41NjIyMjY1NiAxMzIuNDkyMTg3NSA0Ni43NzM0Mzc1IEMxMzguOTc1MDA0MzYgNTIuNDY2MTA0OTMgMTQ0LjQyODc3NDA0IDU4LjU0OTA0MTUzIDE0OS42ODc1IDY1LjM3NSBDMTUwLjc3OTk4MDQ3IDY2LjcyNjU4MjAzIDE1MC43Nzk5ODA0NyA2Ni43MjY1ODIwMyAxNTEuODk0NTMxMjUgNjguMTA1NDY4NzUgQzE3My40MTg3NDAxMiA5NS40MzQ4MDU3NiAxODUuOTA5Mjk3NTMgMTMyLjgxNjExMTIzIDE4NS44MjAzMTI1IDE2Ny41ODIwMzEyNSBDMTg1LjgyMTc0NzU5IDE2OC44NTIwMDIwMyAxODUuODIxNzQ3NTkgMTY4Ljg1MjAwMjAzIDE4NS44MjMyMTE2NyAxNzAuMTQ3NjI4NzggQzE4NS44MjM4ODc0NCAxNzEuOTI2NjI2MzMgMTg1LjgyMjA3NTYgMTczLjcwNTYyNjQzIDE4NS44MTc4NzEwOSAxNzUuNDg0NjE5MTQgQzE4NS44MTI1MzQ0OSAxNzguMTcwMTQyNjQgMTg1LjgxNzgyNjQyIDE4MC44NTU0OTczNyAxODUuODI0MjE4NzUgMTgzLjU0MTAxNTYyIEMxODUuODIzNTU3NDcgMTg1LjI4Mzg1NDUzIDE4NS44MjIyNzUyOCAxODcuMDI2NjkzMzMgMTg1LjgyMDMxMjUgMTg4Ljc2OTUzMTI1IEMxODUuODIyMzM2NzMgMTg5LjU1NDMxMzUxIDE4NS44MjQzNjA5NiAxOTAuMzM5MDk1NzYgMTg1LjgyNjQ0NjUzIDE5MS4xNDc2NTkzIEMxODUuNzk5ODcyMTggMTk3LjY0NjUzMTg2IDE4NS4yMzI1OTkyNCAyMDMuODMzODA5MDcgMTg0LjY4NzUgMjEwLjM3NSBDMTAxLjg1NzUgMjEwLjM3NSAxOS4wMjc1IDIxMC4zNzUgLTY2LjMxMjUgMjEwLjM3NSBDLTU3LjM3ODE2ODgxIDIzMi43MTA4Mjc5NyAtNDYuNDczNzQzODEgMjQ3LjQxNjk5NjI2IC0yNC40Mzc1IDI1Ny4xODc1IEMzLjE3NTE1NzUxIDI2Ny44ODQ2Mjg3MSAzNi4yNjEzMDE3OCAyNjcuNzcwODY4NDQgNjMuNjI0NTExNzIgMjU2LjI5Nzg1MTU2IEM3My40MTczMTgzNyAyNTEuOTE3MTY0MDkgODIuMzIxNzg3MTYgMjQ2LjM4MDQyMDM5IDkwLjUyODMyMDMxIDIzOS40NzM2MzI4MSBDOTMuNjQwOTk0NjEgMjM2LjkwNDYwMzUzIDk0LjQ1NDE2MjA4IDIzNi4zNzUgOTguNjg3NSAyMzYuMzc1IEMxMDAuOTU4MjUxOTUgMjM4LjE3NTc4MTI1IDEwMC45NTgyNTE5NSAyMzguMTc1NzgxMjUgMTAzLjQyNTc4MTI1IDI0MC42ODc1IEMxMDQuMzI4NzY5NTMgMjQxLjU5ODg2NzE5IDEwNS4yMzE3NTc4MSAyNDIuNTEwMjM0MzcgMTA2LjE2MjEwOTM4IDI0My40NDkyMTg3NSBDMTA3LjEwODExMTU1IDI0NC40MjQ0NDE3IDEwOC4wNTQwNzQ4NiAyNDUuMzk5NzAyMzQgMTA5IDI0Ni4zNzUgQzEwOS45MjQ5MDIzNCAyNDcuMzA5NTcwMzEgMTEwLjg0OTgwNDY5IDI0OC4yNDQxNDA2MiAxMTEuODAyNzM0MzggMjQ5LjIwNzAzMTI1IEMxMTYuMzUyMTExMTcgMjUzLjgzMDc3NTk3IDEyMC43NDUyMjM3OCAyNTguNTMxOTAzNjYgMTI0Ljk3MzM4ODY3IDI2My40NDkyMTg3NSBDMTI4LjIxMTIzNDQzIDI2Ny4wODY4OTUzNCAxMzEuNzE0MzUwMzQgMjcwLjQ2Mzk4MTgxIDEzNS4xODc1IDI3My44NzUgQzE0MC4wMDYyNTE5NSAyNzguNjA3NTQ4ODcgMTQ0LjY0NzYzMDY4IDI4My4zOTI5NDM3MyAxNDkuMDUzMjIyNjYgMjg4LjUxMzY3MTg4IEMxNTEuNDYwMTU4MjkgMjkxLjI1NTAwNCAxNTQuMDIzMjIyNSAyOTMuODIwMDA0MTIgMTU2LjYyNSAyOTYuMzc1IEMxNTcuMzY0NTk5NjEgMjk3LjEwNzgzMjAzIDE1Ny4zNjQ1OTk2MSAyOTcuMTA3ODMyMDMgMTU4LjExOTE0MDYyIDI5Ny44NTU0Njg3NSBDMTU5LjMwNjIzMjI5IDI5OS4wMzEwMzUyNSAxNjAuNDk2NTA0OTggMzAwLjIwMzM4ODI2IDE2MS42ODc1IDMwMS4zNzUgQzE0Ny40NDU4ODAyNyAzMjYuNDE2MTU2MTQgMTExLjE5NjYyMjY3IDM0Mi41ODIyNDI3MSA4NC43OTEwMTU2MiAzNTAuMjExOTE0MDYgQzgxLjcwMjg2MzQ2IDM1MS4wNTYyMjE2NCA3OC42MDY2NTk0NCAzNTEuODUxNjgxIDc1LjUgMzUyLjYyNSBDNzQuNTgyOTEyNiAzNTIuODU5MTI1OTggNzMuNjY1ODI1MiAzNTMuMDkzMjUxOTUgNzIuNzIwOTQ3MjcgMzUzLjMzNDQ3MjY2IEM1NC4zNDMyNTU0NSAzNTcuNjY3NTg4NTMgMzUuNjAwMjQ1MDcgMzU4Ljg3OTkxMjkyIDE2Ljc3ODA3NjE3IDM1OC43NjYxMTMyOCBDMTMuNjIxNzk1MTggMzU4Ljc0OTk4MzYyIDEwLjQ2Njc5MDU1IDM1OC43NjYxMTE4NSA3LjMxMDU0Njg4IDM1OC43ODUxNTYyNSBDLTExLjAwNjI5MjQ3IDM1OC44MDUwMzUzOCAtMjkuMTQ2NTA1NyAzNTcuMTY0ODU3MDkgLTQ2LjkzNzUgMzUyLjYyNSBDLTQ3Ljk2OTA3MjI3IDM1Mi4zNjc1MDk3NyAtNDkuMDAwNjQ0NTMgMzUyLjExMDAxOTUzIC01MC4wNjM0NzY1NiAzNTEuODQ0NzI2NTYgQy04MC45OTI2MjU4NSAzNDMuOTI5NTI0OTIgLTEwOS41MDUxNzkxNiAzMzAuOTU0MzYzMDEgLTEzMy4zMTI1IDMwOS4zNzUgQy0xMzQuMjc2NzE4NzUgMzA4LjU0MjI2NTYzIC0xMzUuMjQwOTM3NSAzMDcuNzA5NTMxMjUgLTEzNi4yMzQzNzUgMzA2Ljg1MTU2MjUgQy0xNDIuNjgwOTkxNDYgMzAxLjIwNjMyMTAxIC0xNDguMDk1MTAwMTMgMjk1LjE2MDQxOTg2IC0xNTMuMzEyNSAyODguMzc1IEMtMTU0LjA2NDAyMzQ0IDI4Ny40Mjc1MzkwNiAtMTU0LjgxNTU0Njg3IDI4Ni40ODAwNzgxMiAtMTU1LjU4OTg0Mzc1IDI4NS41MDM5MDYyNSBDLTE2MS4yOTQ2MTI2NyAyNzguMTYwODQ0NzIgLTE2NS45MjE4MzkyOSAyNzAuNTM5NzYwNTUgLTE3MC4zMTI1IDI2Mi4zNzUgQy0xNzAuODM1ODU5MzggMjYxLjQzMzk4NDM4IC0xNzEuMzU5MjE4NzUgMjYwLjQ5Mjk2ODc1IC0xNzEuODk4NDM3NSAyNTkuNTIzNDM3NSBDLTE4Mi45MjU0MjYxNSAyMzguODExMzY4ODYgLTE4OS4zMjI3OTI2OSAyMTMuOTE2MTIzNDQgLTE4OS41NTA3ODEyNSAxOTAuNDY4NzUgQy0xODkuNTYwNTc1MSAxODkuNjM0NzAxMzkgLTE4OS41NzAzNjg5NiAxODguODAwNjUyNzcgLTE4OS41ODA0NTk1OSAxODcuOTQxMzI5OTYgQy0xODkuNzQ5ODIxNDUgMTY5Ljc3NTk4MDA5IC0xODkuNzM3OTk5MSAxNTIuMTE0Mjk5NDYgLTE4NS4zMTI1IDEzNC4zNzUgQy0xODUuMTAzNTEwNzQgMTMzLjUxNzkzNDU3IC0xODQuODk0NTIxNDggMTMyLjY2MDg2OTE0IC0xODQuNjc5MTk5MjIgMTMxLjc3NzgzMjAzIEMtMTc3LjU3OTM2MzUzIDEwMy42MDcxNzMxMiAtMTYzLjI3NDY2MTA2IDc4LjQwMjY0NTMyIC0xNDMuMzEyNSA1Ny4zNzUgQy0xNDIuODQ4OTIwOSA1Ni44Nzg4NzIwNyAtMTQyLjM4NTM0MTggNTYuMzgyNzQ0MTQgLTE0MS45MDc3MTQ4NCA1NS44NzE1ODIwMyBDLTExNi42ODgxNDk1MyAyOS4wMTUzNDg3NyAtODMuMjExMDczNTYgMTIuNDU1NjE3ODkgLTQ3LjUgNC41NjI1IEMtNDYuNjE4NzY0NjUgNC4zNjc2MDk4NiAtNDUuNzM3NTI5MyA0LjE3MjcxOTczIC00NC44Mjk1ODk4NCAzLjk3MTkyMzgzIEMtMjkuODg2MTcyODggMC44NjE3OTYwNSAtMTUuMjE2MjYxNDQgLTAuMDM0MDc3MDUgMCAwIFogTS01MS4zMTI1IDEwOC4zNzUgQy01OS42OTY1OTcwMiAxMTguOTY2MTQ2NjQgLTY4LjMxMjUgMTMyLjQ0NDgyMzI4IC02OC4zMTI1IDE0Ni4zNzUgQy0yMi4xMTI1IDE0Ni4zNzUgMjQuMDg3NSAxNDYuMzc1IDcxLjY4NzUgMTQ2LjM3NSBDNjcuMzk0MTM1MDIgMTI5LjIwMTU0MDA5IDYzLjIwMzU3NDkyIDExNy41MzUzNzgyOSA1MC42ODc1IDEwNS4zNzUgQzUwLjA3NTE5NTMxIDEwNC43NDIwNzAzMSA0OS40NjI4OTA2MiAxMDQuMTA5MTQwNjMgNDguODMyMDMxMjUgMTAzLjQ1NzAzMTI1IEMzNS4xMjcxNzMxMSA5MC4yMTk3MTYyNCAxNi4yMDcwNjE4NSA4Ni43MzE0NjkxMSAtMi4xMDgxNTQzIDg2LjkwNjQ5NDE0IEMtMjAuNzQ0NzE2NDkgODcuNDQ2Mzc3OTEgLTM4LjY2ODM0Mzk5IDk0LjI1NjA1MzkyIC01MS4zMTI1IDEwOC4zNzUgWiAiIGZpbGw9IiNGRkZGRkYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDcxNC4zMTI1LDI1MS42MjUpIi8+Cgo8cGF0aCBkPSJNMCAwIEMwIDM2LjMgMCA3Mi42IDAgMTEwIEMtNi45MyAxMDkuNTA1IC02LjkzIDEwOS41MDUgLTE0IDEwOSBDLTM5Ljg4MTM1MjI5IDEwOC4xODU4MjU1OCAtNjUuMjQ1NDg0OTUgMTA5LjYyNzIxMzk4IC04Ni4xMjUgMTI3IEMtMTAyLjM5ODYxNjUzIDE0Mi4zOTM5NjE1OSAtMTA4Ljc0NjQ0OTQ2IDE2NC43MDA0MTkyOCAtMTA5LjM4NzgxNzM4IDE4Ni41MTcyMTE5MSBDLTEwOS42MTQ4OTU1OSAxOTYuMDY0MDc2MTkgLTEwOS42MDk1NzEyOCAyMDUuNjE0NTI3MjUgLTEwOS42MDc1MDQ4NCAyMTUuMTYzNTQwODQgQy0xMDkuNjEwNjY3NTUgMjE5Ljk4NjgzMzI3IC0xMDkuNjM2MzU0MzYgMjI0LjgxMDAwOTIgLTEwOS42NTk0ODQ4NiAyMjkuNjMzMjM5NzUgQy0xMDkuNjk5Nzk0MjcgMjM4LjczNDQ3NTg4IC0xMDkuNzIwMzI2MTEgMjQ3LjgzNTY0MDgzIC0xMDkuNzMzNDU4NzYgMjU2LjkzNjk1MjM1IEMtMTA5Ljc1MjQwNzQ3IDI2OS4yNTgzMTQ1NCAtMTA5LjgwMjUwMzY1IDI4MS41Nzk1NDk1MyAtMTA5Ljg1MDcwMjI5IDI5My45MDA4MjU1IEMtMTA5LjkyNTY1MTg4IDMxMy4yNjcyMTAyOCAtMTA5Ljk1OTUwMTEzIDMzMi42MzM0NDE1MSAtMTEwIDM1MiBDLTE1MC4yNiAzNTIgLTE5MC41MiAzNTIgLTIzMiAzNTIgQy0yMzIgMjM3LjgyIC0yMzIgMTIzLjY0IC0yMzIgNiBDLTE5My43MiA2IC0xNTUuNDQgNiAtMTE2IDYgQy0xMTUuNjcgMTguNTQgLTExNS4zNCAzMS4wOCAtMTE1IDQ0IEMtMTEwLjU0NSAzOS4wNSAtMTEwLjU0NSAzOS4wNSAtMTA2IDM0IEMtMTAzLjgyNTQxMzA0IDMyLjAyNjUzMDkxIC0xMDEuNzUyNjk2NzYgMzAuMjA3MjgzMDcgLTk5LjQzNzUgMjguNDM3NSBDLTk4LjU1NDMzMTA1IDI3Ljc1NzM1ODQgLTk4LjU1NDMzMTA1IDI3Ljc1NzM1ODQgLTk3LjY1MzMyMDMxIDI3LjA2MzQ3NjU2IEMtNjguOTU5OTUxNzEgNS41Mzk2ODQ1OCAtMzUuMTMyNDI5OTkgMCAwIDAgWiAiIGZpbGw9IiNGRkZGRkYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDExNTAsMjA5KSIvPgoKPHBhdGggZD0iTTAgMCBDMTQuMDYxMDI5OTIgMTEuOTU1MTY1ODQgMjEuOTk1MDkyNyAyOC43NjE4MTA5OCAyNCA0NyBDMjUuNzY2MTU5MyA2OS44ODMyODE0MiAxOS42NTkwODU0OSA4OS4xNTM1OTEzMyA1LjM1NTQ2ODc1IDEwNy4wNTg1OTM3NSBDLTUuNDQ4OTE4MzMgMTE4LjkwMjM5MDIyIC0yMy4wOTY2NTU0IDEyNy4xMTA1ODgyNSAtMzguOTc4NzU5NzcgMTI4LjIwNTMyMjI3IEMtNDIuMjc5OTc2MzMgMTI4LjMwMzc3MjA5IC00NS41NzIzOTI2NSAxMjguMzIyMDQ1MTEgLTQ4Ljg3NSAxMjguMzEyNSBDLTQ5Ljk4MjMwNDY5IDEyOC4zMjg2MTMyOCAtNTEuMDg5NjA5MzggMTI4LjM0NDcyNjU2IC01Mi4yMzA0Njg3NSAxMjguMzYxMzI4MTIgQy01OS42MTk0NzUxMiAxMjguMzY1NjY5NDkgLTY1Ljk5NzgxNzQxIDEyNy4zNDA1OTY4MiAtNzMgMTI1IEMtNzQuMDY5OTIxODggMTI0LjY0Njc5Njg4IC03NS4xMzk4NDM3NSAxMjQuMjkzNTkzNzUgLTc2LjI0MjE4NzUgMTIzLjkyOTY4NzUgQy05NC42MzU2MDU2MyAxMTYuNTYxNDA0MjcgLTEwOC4yMzg5NzU1NSAxMDMuNDU3NDMzMzYgLTExNi42MDkzNzUgODUuNTU4NTkzNzUgQy0xMjQuODU5NjQ1NzggNjUuMDA1NzEzMyAtMTIzLjg4NjM0OTUgNDIuNTUyMjU0NzYgLTExNS40NjUzMzIwMyAyMi4xNjI1OTc2NiBDLTExMy4wNDQzMzY2NCAxNi42OTY3MjkzNyAtMTEwLjA0NjU2MTc1IDEyLjM2MTU2MzU2IC0xMDYgOCBDLTEwNS4yODE5OTIxOSA3LjE4MDE1NjI1IC0xMDQuNTYzOTg0MzggNi4zNjAzMTI1IC0xMDMuODI0MjE4NzUgNS41MTU2MjUgQy03Ny42MTI2OTkwNSAtMjIuNzk3OTY0MiAtMjkuNTUwNTA3MTEgLTIyLjkxOTI1NzI3IDAgMCBaICIgZmlsbD0iI0ZGQ0MwMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTU4OCwyNDMpIi8+Cgo8L3N2Zz4K" alt="Rere Photo" style="height:34px;width:auto;object-fit:contain;" onerror="this.style.display='none'">
+      </a>
+      <div style="display:flex;align-items:center;gap:.6rem;">
+        <a href="index.html" style="font-size:.73rem;font-weight:700;color:#fff;text-decoration:none;">&larr; Beranda</a>
+        <button onclick="logoutUser('login-member.html')" style="background:rgba(223,77,0,.15);color:#fff;font-weight:800;font-size:.7rem;padding:.45rem 1rem;border-radius:.65rem;border:2px solid rgba(255,150,100,.4);cursor:pointer;">Keluar</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-6xl w-full mx-auto px-3 sm:px-4 py-5 sm:py-8 space-y-4 sm:space-y-6">
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Profil Klien -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs">
+      <div class="flex items-center gap-3 sm:gap-4">
+        <div class="relative w-14 h-14 sm:w-16 sm:h-16 shrink-0">
+          <img id="client-avatar-display" src="" alt="Avatar" class="avatar-img w-full h-full rounded-2xl shadow-md border-2 border-[#d4e8d4]">
+          <div id="client-avatar-fallback" class="avatar-fallback w-full h-full rounded-2xl bg-gradient-to-br from-[#3a5c37] to-[#2d4a2c] text-white font-black text-2xl sm:text-3xl items-center justify-center shadow-md">👤</div>
+        </div>
+        <div>
+          <div class="text-[10px] sm:text-xs font-bold text-[#3a5c37] uppercase tracking-wide">Member Rere Photo Studio</div>
+          <h2 id="client-name-display" class="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900">Memuat Profil...</h2>
+          <div class="flex flex-wrap items-center gap-2 mt-1">
+            <span id="client-id-display" class="font-mono text-[10px] sm:text-xs font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">08XXXXXXXXXX</span>
+            <span id="client-tier-display" class="text-[10px] sm:text-xs font-bold bg-[#fff8e1] text-[#92400e] px-2 py-0.5 rounded">-</span>
+            <button onclick="openProfileEditModal()" class="text-[10px] sm:text-xs font-bold text-[#3a5c37] hover:text-[#2d4a2c] bg-[#edf5ed] px-2 py-0.5 rounded">✏️ Edit Profil</button>
+          </div>
+        </div>
+      </div>
+      <div class="bg-[#edf5ed] border border-[#d4e8d4] p-4 sm:p-5 rounded-xl sm:rounded-2xl text-left sm:text-right">
+        <div class="text-[10px] sm:text-xs text-[#3a5c37] font-semibold">Total Poin Loyalitas</div>
+        <div id="client-points-display" class="text-2xl sm:text-3xl lg:text-4xl font-black text-[#1a2e1a] mt-0.5">0 Pts</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start">
+      <!-- QR Card — fit, tidak molor ke bawah -->
+      <div class="lg:col-span-1 bg-gradient-to-b from-slate-900 to-slate-800 text-white rounded-2xl sm:rounded-3xl shadow-lg overflow-hidden self-start" style="width:100%;">
+        <div class="px-5 pt-5 pb-3 text-center border-b border-slate-700">
+          <span class="text-[9px] font-bold uppercase tracking-widest text-slate-400">Rere Photo Official Pass</span>
+          <h3 class="text-sm font-extrabold text-white mt-0.5">Scan QR Check-In</h3>
+          <p class="text-[10px] text-slate-400 mt-0.5">Tunjukkan saat datang ke studio</p>
+        </div>
+        <div class="flex flex-col items-center px-5 py-4 gap-3">
+          <div id="client-qrcode" class="p-3 bg-white rounded-xl shadow-xl inline-flex items-center justify-center" style="width:160px;height:160px;"></div>
+          <div class="w-full bg-white px-3 py-2 rounded-xl shadow-inner">
+            <svg id="client-barcode" class="w-full" style="height:36px;display:block;"></svg>
+          </div>
+        </div>
+        <div class="px-5 pb-4 text-center">
+          <p class="text-[9px] text-slate-500">Valid untuk penambahan poin otomatis oleh staf Rere Photo.</p>
+        </div>
+      </div>
+
+      <!-- Galeri & Progress -->
+      <div class="lg:col-span-2 space-y-4 sm:space-y-6">
+
+        <!-- BOOKING SESI SECTION -->
+        <div class="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl border-2 border-[#feb702] shadow-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 class="font-bold text-slate-800 text-sm sm:text-base">📅 Booking Sesi Foto</h3>
+              <p class="text-[10px] sm:text-xs text-slate-500">Pesan sesi fotobox — pantau statusnya di sini.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="loadClientBookings()" class="text-[10px] font-bold text-[#3a5c37] bg-[#edf5ed] px-2.5 py-1 rounded-lg">🔄 Segarkan</button>
+              <a href="booking.html" style="background:#feb702;color:#1c1917;font-weight:800;font-size:.7rem;padding:.5rem 1rem;border-radius:.7rem;text-decoration:none;box-shadow:2px 2px 0 #e0a000;white-space:nowrap;">+ Booking Baru</a>
+            </div>
+          </div>
+          <div id="client-bookings" class="space-y-2">
+            <p class="text-xs text-slate-400 text-center py-3">Memuat booking...</p>
+          </div>
+        </div>
+
+        <!-- REWARD SECTION -->
+        <div class="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-slate-800 text-sm sm:text-base">🎁 Reward & Tukar Poin</h3>
+            <span id="client-reward-target-badge" class="text-[9px] sm:text-[10px] font-bold bg-[#d4e8d4] text-[#2d4a2c] px-2 py-0.5 rounded-full">Poin: 0</span>
+          </div>
+
+          <!-- Progress bar -->
+          <p id="client-progress-text" class="text-[11px] sm:text-xs text-slate-500 font-medium mb-2">Menghitung progres poin...</p>
+          <div class="w-full bg-slate-100 h-2 sm:h-2.5 rounded-full overflow-hidden mb-4">
+            <div id="client-reward-progress" class="bg-gradient-to-r from-[#3a5c37] to-[#feb702] h-full rounded-full transition-all duration-500" style="width:0%"></div>
+          </div>
+
+          <!-- Daftar reward tersedia -->
+          <div id="reward-list" class="space-y-2">
+            <p class="text-xs text-slate-400 text-center py-3">Memuat reward...</p>
+          </div>
+
+          <!-- Riwayat penukaran -->
+          <div class="mt-4 border-t border-slate-100 pt-3">
+            <button onclick="toggleRedemptionHistory()" class="text-[10px] sm:text-xs font-bold text-[#3a5c37] hover:underline">📋 Lihat Riwayat Penukaran</button>
+            <div id="redemption-history" class="hidden mt-2 space-y-1.5"></div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="font-bold text-slate-800 text-sm sm:text-base">🖼️ Galeri Sesi Foto & Delivery</h3>
+              <p class="text-[10px] sm:text-xs text-slate-500">Klik sesi foto untuk melihat detail dan klaim hasil fotomu.</p>
+            </div>
+            <button onclick="fetchDashboardData('client', currentUser.id)" class="text-[10px] sm:text-xs font-semibold text-[#3a5c37] hover:text-[#2d4a2c] shrink-0 text-left sm:text-right">🔄 Segarkan</button>
+          </div>
+          <div class="p-4 sm:p-5">
+            <div id="client-photo-gallery" class="gallery-grid"></div>
+            <div id="client-empty-gallery" class="hidden text-center py-8 sm:py-10">
+              <div class="text-3xl sm:text-4xl mb-2">📷</div>
+              <p class="text-xs sm:text-sm text-slate-500">Belum ada sesi foto di Rere Photo.</p>
+              <p class="text-[10px] sm:text-xs text-slate-400">Yuk reservasi dan abadikan momenmu!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="py-5 sm:py-6 border-t border-slate-200 text-center text-[10px] sm:text-xs text-slate-400 bg-white mt-auto">
+    &copy; 2026 Rere Photo Member Portal.
+  </footer>
+
+  <!-- MODAL DETAIL SESI FOTO — halaman unduh file -->
+  <div id="session-detail-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl transform transition-all max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <span class="text-[9px] sm:text-[10px] font-bold text-[#3a5c37] uppercase tracking-wider">📥 Unduh Foto Sesi</span>
+          <h3 id="modal-session-title" class="text-lg sm:text-xl font-black text-slate-900">Sesi Foto</h3>
+        </div>
+        <button onclick="closeSessionModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold">✕</button>
+      </div>
+      <div id="modal-photo-preview" class="photo-stack mb-4 aspect-[4/3]"></div>
+
+      <!-- Info singkat sesi -->
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-xs text-slate-500 mb-3">
+        <span id="modal-session-package" class="font-bold text-[#3a5c37]">-</span>
+        <span id="modal-session-date">-</span>
+        <span id="modal-session-points" class="text-[#3a5c37] font-bold">-</span>
+        <span id="modal-session-staff">-</span>
+      </div>
+
+      <!-- Daftar file foto — klik unduh per file -->
+      <div class="font-bold text-slate-700 text-xs mb-2">📂 File Foto Sesi <span class="text-slate-400 font-normal">(klik ⬇️ untuk unduh)</span></div>
+      <div id="modal-file-list" class="space-y-2 mb-4"></div>
+
+      <div class="mt-1">
+        <a id="modal-download-btn" href="#" target="_blank" rel="noopener" class="w-full py-3 sm:py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#3a5c37] to-[#3a5c37] hover:from-[#2d4a2c] hover:to-[#2d4a2c] text-white font-extrabold text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 transition transform hover:-translate-y-0.5">
+          <span>📁 Buka Folder Google Drive</span><span>↗</span>
+        </a>
+        <p class="text-[9px] sm:text-[11px] text-center text-slate-400 mt-2">File di atas bisa diunduh satu per satu. Folder Google Drive berisi semua foto asli sesimu.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT PROFIL -->
+  <div id="profile-edit-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 max-w-sm w-full shadow-2xl transform transition-all max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <span class="text-[9px] sm:text-[10px] font-bold text-[#3a5c37] uppercase tracking-wider">Pengaturan Akun</span>
+          <h3 class="text-lg sm:text-xl font-black text-slate-900">Edit Profil</h3>
+        </div>
+        <button onclick="closeProfileEditModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold">✕</button>
+      </div>
+
+      <form id="form-edit-profile" class="space-y-3 sm:space-y-4">
+        <div class="flex flex-col items-center mb-2">
+          <!-- Preview avatar -->
+          <div class="relative w-20 h-20 sm:w-24 sm:h-24">
+            <img id="edit-avatar-preview" src="" alt="Avatar" class="avatar-img w-full h-full rounded-2xl shadow-md border-3 border-[#3a5c37] object-cover">
+            <div id="edit-avatar-fallback" class="avatar-fallback w-full h-full rounded-2xl bg-gradient-to-br from-[#3a5c37] to-[#2d4a2c] text-white font-black text-3xl items-center justify-center shadow-md">👤</div>
+          </div>
+
+          <!-- Tombol pilih avatar -->
+          <button type="button" onclick="toggleAvatarPicker()"
+            class="mt-2 text-[10px] sm:text-xs font-bold text-[#3a5c37] bg-[#edf5ed] hover:bg-[#d4e8d4] px-3 py-1.5 rounded-lg transition">
+            🎭 Pilih Avatar Karakter
+          </button>
+
+          <!-- AVATAR PICKER GRID -->
+          <div id="avatar-picker" style="display:none;" class="w-full mt-3">
+            <div class="text-[10px] font-bold text-slate-500 mb-2 text-center">Pilih karakter favoritmu!</div>
+
+            <!-- Tab style -->
+            <div class="flex gap-1 mb-2 overflow-x-auto pb-1" style="scrollbar-width:none;">
+              <button type="button" onclick="loadAvatarStyle('adventurer')"     class="av-tab flex-shrink-0 text-[9px] font-bold px-2 py-1 rounded-full bg-[#3a5c37] text-white">Adventurer</button>
+              <button type="button" onclick="loadAvatarStyle('fun-emoji')"      class="av-tab flex-shrink-0 text-[9px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-600">Fun Emoji</button>
+              <button type="button" onclick="loadAvatarStyle('bottts')"         class="av-tab flex-shrink-0 text-[9px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-600">Robot</button>
+              <button type="button" onclick="loadAvatarStyle('lorelei')"        class="av-tab flex-shrink-0 text-[9px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-600">Lorelei</button>
+              <button type="button" onclick="loadAvatarStyle('micah')"          class="av-tab flex-shrink-0 text-[9px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-600">Micah</button>
+              <button type="button" onclick="loadAvatarStyle('notionists')"     class="av-tab flex-shrink-0 text-[9px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-600">Notion</button>
+            </div>
+
+            <!-- Grid avatar -->
+            <div id="avatar-grid" class="grid grid-cols-5 gap-1.5 max-h-48 overflow-y-auto p-1" style="scrollbar-width:thin;">
+              <!-- Diisi JS -->
+            </div>
+
+            <!-- Upload sendiri -->
+            <div class="mt-2 border-t border-slate-100 pt-2">
+              <label class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 cursor-pointer hover:text-[#3a5c37]">
+                <span>📁 Upload foto sendiri</span>
+                <input type="file" id="edit-avatar-input" accept="image/*" class="hidden" />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] sm:text-xs font-bold text-slate-700 mb-1">Nama Lengkap</label>
+          <input type="text" id="edit-name" required class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-xs sm:text-sm" />
+        </div>
+        <div>
+          <label class="block text-[10px] sm:text-xs font-bold text-slate-700 mb-1">Email</label>
+          <input type="email" id="edit-email" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-xs sm:text-sm" />
+        </div>
+        <div>
+          <label class="block text-[10px] sm:text-xs font-bold text-slate-700 mb-1">Nomor Handphone (ID Member)</label>
+          <input type="tel" id="edit-phone" disabled class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-100 text-slate-500 text-xs sm:text-sm font-mono" />
+          <p class="text-[9px] text-slate-400 mt-0.5">*Nomor HP tidak dapat diubah karena menjadi ID Member.</p>
+        </div>
+        <div>
+          <label class="block text-[10px] sm:text-xs font-bold text-slate-700 mb-1">Kata Sandi Baru <span class="text-slate-400 font-normal">(kosongkan jika tidak diubah)</span></label>
+          <input type="password" id="edit-password" placeholder="••••••••" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-xs sm:text-sm" />
+        </div>
+
+        <button type="submit" class="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-[#3a5c37] hover:bg-[#2d4a2c] text-white font-bold text-xs sm:text-sm shadow transition">
+          💾 Simpan Perubahan Profil
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- IDLE WARNING -->
+  <div id="idle-warning" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 max-w-sm w-full shadow-2xl text-center">
+      <div class="text-3xl sm:text-4xl mb-3">⏳</div>
+      <h3 class="text-base sm:text-lg font-black text-slate-900 mb-1">Sesi Akan Berakhir</h3>
+      <p class="text-[11px] sm:text-xs text-slate-500 mb-4">Anda tidak aktif selama beberapa menit. Klik tombol di bawah agar tetap masuk, atau sistem akan otomatis keluar demi keamanan akun Anda.</p>
+      <button onclick="resetIdleTimer()" class="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-[#3a5c37] hover:bg-[#2d4a2c] text-white font-bold text-xs sm:text-sm shadow transition">Saya Masih di Sini</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    let idleTimer, idleWarningTimer;
+    const IDLE_TIMEOUT = 5 * 60 * 1000;
+    const IDLE_WARNING_BEFORE = 30 * 1000;
+    let pendingAvatarBase64 = null;
+
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      clearTimeout(idleWarningTimer);
+      document.getElementById("idle-warning").classList.add("hidden");
+      idleWarningTimer = setTimeout(() => document.getElementById("idle-warning").classList.remove("hidden"), IDLE_TIMEOUT - IDLE_WARNING_BEFORE);
+      idleTimer = setTimeout(() => { showToast("Sesi Anda berakhir karena tidak aktif selama 5 menit.", "info"); logoutUser("login-member.html"); }, IDLE_TIMEOUT);
+    }
+
+    function setupIdleDetector() {
+      ["mousemove", "keydown", "click", "touchstart", "scroll"].forEach(evt => document.addEventListener(evt, resetIdleTimer, { passive: true }));
+      resetIdleTimer();
+    }
+
+    function openSessionModal(trx) {
+      document.getElementById("modal-session-title").textContent = trx.package_name || "Sesi Foto";
+      document.getElementById("modal-session-date").textContent = (trx.timestamp || "").split(' ')[0];
+      document.getElementById("modal-session-package").textContent = trx.package_name || "Sesi Foto";
+      document.getElementById("modal-session-points").textContent = `+${Number(trx.points_added) || 0} Poin`;
+      document.getElementById("modal-session-staff").textContent = trx.staff_name ? trx.staff_name.split('(')[0] : "Staf Rere Photo";
+      document.getElementById("modal-download-btn").href = safeUrl(trx.gdrive_url);
+      document.getElementById("modal-photo-preview").innerHTML = generateSessionPhotos(trx);
+
+      // Daftar file foto yang bisa diunduh per file
+      var files = [];
+      if (trx && Array.isArray(trx.photos) && trx.photos.length) {
+        trx.photos.forEach(function (u, i) { files.push({ url: u, label: "Foto " + (i + 1) }); });
+      } else if (trx && trx.cover_url) {
+        files.push({ url: trx.cover_url, label: "Foto Sesi" });
+      }
+      var listEl = document.getElementById("modal-file-list");
+      if (files.length) {
+        listEl.innerHTML = files.map(function (f, i) {
+          return '<div class="flex items-center justify-between gap-2 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50">' +
+            '<div class="flex items-center gap-2 min-w-0">' +
+              '<img src="' + safeImageUrl(f.url) + '" alt="' + escapeHtml(f.label) + '" class="w-9 h-9 rounded-lg object-cover flex-shrink-0" onerror="this.style.display=\'none\'">' +
+              '<span class="text-xs font-bold text-slate-700 truncate">' + escapeHtml(f.label) + '</span>' +
+            '</div>' +
+            '<a href="' + safeImageUrl(f.url) + '" target="_blank" rel="noopener" style="flex-shrink:0;background:#3a5c37;color:#fff;font-weight:800;font-size:.68rem;padding:.45rem .8rem;border-radius:.6rem;text-decoration:none;">⬇️ Unduh</a>' +
+          '</div>';
+        }).join("");
+      } else {
+        listEl.innerHTML = '<div class="text-[10px] text-slate-400 text-center py-3 border border-dashed border-slate-200 rounded-xl">Belum ada file foto terpisah. Klik tombol di bawah untuk membuka folder hasil foto.</div>';
+      }
+      document.getElementById("session-detail-modal").classList.remove("hidden");
+    }
+
+    function closeSessionModal() { document.getElementById("session-detail-modal").classList.add("hidden"); }
+
+    // ── AVATAR PICKER ─────────────────────────────
+    let currentAvatarStyle = 'adventurer';
+    const AVATAR_SEEDS = [
+      'Felix','Rere','Mika','Nara','Zara','Luna','Kira','Sora',
+      'Yuki','Hana','Riku','Nino','Taro','Aiko','Mei','Kenzo',
+      'Rina','Dato','Fara','Juno','Kenji','Lani','Momo','Nala',
+      'Obi','Pita','Qila','Rafa','Siti','Tiva'
+    ];
+
+    function toggleAvatarPicker() {
+      const picker = document.getElementById('avatar-picker');
+      const shown = picker.style.display !== 'none';
+      picker.style.display = shown ? 'none' : 'block';
+      if (!shown) loadAvatarStyle(currentAvatarStyle);
+    }
+
+    function loadAvatarStyle(style) {
+      currentAvatarStyle = style;
+      // Update tab aktif
+      document.querySelectorAll('.av-tab').forEach(t => {
+        t.className = t.className.replace('bg-[#3a5c37] text-white','bg-slate-100 text-slate-600');
+      });
+      event.target.className = event.target.className.replace('bg-slate-100 text-slate-600','bg-[#3a5c37] text-white');
+
+      const grid = document.getElementById('avatar-grid');
+      grid.innerHTML = AVATAR_SEEDS.map(seed => {
+        const url = `https://api.dicebear.com/8.x/${style}/svg?seed=${seed}&size=80&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf,f4d150,aed581`;
+        return `<button type="button" onclick="selectAvatar('${url}')"
+          style="border-radius:.65rem;overflow:hidden;border:2px solid transparent;transition:all .15s;padding:2px;background:#f8fafc;"
+          class="av-item hover:border-[#3a5c37]"
+          title="Pilih avatar ${seed}">
+          <img src="${url}" alt="${seed}" style="width:100%;height:auto;border-radius:.5rem;display:block;" loading="lazy">
+        </button>`;
+      }).join('');
+    }
+
+    function selectAvatar(url) {
+      pendingAvatarBase64 = url;
+      const preview = document.getElementById('edit-avatar-preview');
+      const fallback = document.getElementById('edit-avatar-fallback');
+      const mainPreview = document.getElementById('client-avatar-display');
+      preview.src = url;
+      preview.style.display = 'block';
+      fallback.style.display = 'none';
+      // Highlight yang dipilih
+      document.querySelectorAll('.av-item').forEach(el => {
+        el.style.borderColor = el.querySelector('img')?.src === url ? '#3a5c37' : 'transparent';
+        el.style.background  = el.querySelector('img')?.src === url ? '#edf5ed' : '#f8fafc';
+      });
+    }
+    // ──────────────────────────────────────────────
+
+    // ══ REWARD FUNCTIONS ══════════════════════════════
+    async function loadRewards() {
+      const res = await sendGasRequest("getRewards", {}, "GET");
+      const rewards = res?.rewards || [];
+      const pts = currentUser?.points || 0;
+      const list = document.getElementById("reward-list");
+      if (!rewards.length) {
+        list.innerHTML = `<p class="text-xs text-slate-400 text-center py-3">Belum ada reward tersedia.</p>`;
+        return;
+      }
+      list.innerHTML = rewards.filter(r => r.status === "Aktif").map(r => {
+        const canRedeem = pts >= r.points_required;
+        const stockOk   = r.stock > 0;
+        const rewardIdSafe   = escapeHtml(r.reward_id).replace(/'/g, "\\'");
+        const rewardNameSafe = escapeHtml(r.name).replace(/'/g, "\\'");
+        return `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.65rem .85rem;border-radius:.75rem;border:1.5px solid ${canRedeem && stockOk ? '#3a5c37' : '#e5e7eb'};background:${canRedeem && stockOk ? '#edf5ed' : '#f8fafc'};">
+          <div style="flex:1;">
+            <div style="font-size:.8rem;font-weight:800;color:#1a1a1a;">${escapeHtml(r.name)}</div>
+            <div style="font-size:.68rem;color:#6b7280;margin:.1rem 0;">${escapeHtml(r.description)}</div>
+            <div style="font-size:.68rem;font-weight:700;color:#3a5c37;">🪙 ${r.points_required} Poin ${r.stock < 10 ? `· Sisa ${r.stock}` : ''}</div>
+          </div>
+          <button onclick="redeemReward('${rewardIdSafe}','${rewardNameSafe}',${Number(r.points_required) || 0})"
+            style="flex-shrink:0;background:${canRedeem && stockOk ? '#3a5c37' : '#e5e7eb'};color:${canRedeem && stockOk ? '#fff' : '#9ca3af'};font-weight:800;font-size:.65rem;padding:.45rem .85rem;border-radius:.65rem;border:none;cursor:${canRedeem && stockOk ? 'pointer' : 'not-allowed'};"
+            ${canRedeem && stockOk ? '' : 'disabled'}>
+            ${stockOk ? 'TUKAR' : 'HABIS'}
+          </button>
+        </div>`;
+      }).join("") || `<p class="text-xs text-slate-400 text-center py-3">Tidak ada reward aktif saat ini.</p>`;
+    }
+
+    async function redeemReward(reward_id, reward_name, pts_req) {
+      if (!confirm(`Tukar ${pts_req} poin dengan "${reward_name}"?\n\nPoin kamu akan berkurang tapi TIER tidak akan turun.`)) return;
+      const res = await sendGasRequest("redeemReward", { member_id: currentUser.id, reward_id });
+      if (res?.status === "success") {
+        showToast(res.message, "success");
+        currentUser.points = res.updatedUser.points;
+        localStorage.setItem("REREPHOTO_USER", JSON.stringify(currentUser));
+        updateClientUI(currentUser);
+        loadRewards();
+      } else {
+        showToast(res?.message || "Gagal menukar reward.", "error");
+      }
+    }
+
+    async function toggleRedemptionHistory() {
+      const box = document.getElementById("redemption-history");
+      if (!box.classList.contains("hidden")) { box.classList.add("hidden"); return; }
+      box.classList.remove("hidden");
+      const res = await sendGasRequest("getRedemptions", { member_id: currentUser.id }, "GET");
+      const rdms = res?.redemptions || [];
+      box.innerHTML = rdms.length
+        ? rdms.map(r => `<div style="font-size:.68rem;color:#6b7280;padding:.35rem .6rem;background:#f8fafc;border-radius:.5rem;">🎁 <b>${escapeHtml(r.reward_name)}</b> · ${Number(r.points_used) || 0} poin · ${escapeHtml(r.redeemed_at)}</div>`).join("")
+        : `<p style="font-size:.7rem;color:#9ca3af;text-align:center;">Belum ada penukaran.</p>`;
+    }
+    // ══════════════════════════════════════════════════
+
+    function openProfileEditModal() {
+      if (!currentUser) return;
+      document.getElementById("edit-name").value = currentUser.name || "";
+      document.getElementById("edit-email").value = currentUser.email || "";
+      document.getElementById("edit-phone").value = currentUser.phone || currentUser.id || "";
+      document.getElementById("edit-password").value = "";
+      document.getElementById("edit-avatar-preview").src = currentUser.avatar_url || "";
+      document.getElementById("edit-avatar-fallback").textContent = (currentUser.name || "U").charAt(0).toUpperCase();
+      pendingAvatarBase64 = null;
+      document.getElementById("profile-edit-modal").classList.remove("hidden");
+    }
+
+    function closeProfileEditModal() { document.getElementById("profile-edit-modal").classList.add("hidden"); }
+
+    document.getElementById("session-detail-modal").addEventListener("click", (e) => { if (e.target.id === "session-detail-modal") closeSessionModal(); });
+    document.getElementById("profile-edit-modal").addEventListener("click", (e) => { if (e.target.id === "profile-edit-modal") closeProfileEditModal(); });
+
+    // Avatar upload handler
+    document.getElementById("edit-avatar-input").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 1024 * 1024) { showToast("Ukuran foto maksimal 1 MB.", "error"); return; }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        pendingAvatarBase64 = ev.target.result;
+        document.getElementById("edit-avatar-preview").src = pendingAvatarBase64;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("form-edit-profile").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      if (submitBtn.disabled) return; // sudah dalam proses, abaikan klik tambahan
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Menyimpan...";
+      try {
+        const name = document.getElementById("edit-name").value;
+        const email = document.getElementById("edit-email").value;
+        const password = document.getElementById("edit-password").value;
+        // PENTING: kalau user tidak upload foto baru, jangan kirim avatar_url
+        // sama sekali (undefined), bukan null — supaya avatar yang sudah ada
+        // tidak ikut terhapus/tertimpa kosong setiap kali profil disimpan.
+        const avatar = pendingAvatarBase64 !== null ? pendingAvatarBase64 : undefined;
+        const success = await updateUserProfile(name, email, password, avatar);
+        if (success) {
+          closeProfileEditModal();
+          fetchDashboardData("client", currentUser.id);
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+
+    function renderClientQrAndBarcode(memberId) {
+      const qrBox = document.getElementById("client-qrcode");
+      if (qrBox && typeof QRCode !== "undefined") {
+        qrBox.innerHTML = "";
+        new QRCode(qrBox, { text: String(memberId), width: 136, height: 136, colorDark: "#1a2e1a", colorLight: "#ffffff" });
+      }
+      const barcodeEl = document.getElementById("client-barcode");
+      if (barcodeEl && typeof JsBarcode !== "undefined") {
+        try {
+          JsBarcode(barcodeEl, String(memberId), { format: "CODE128", displayValue: true, fontSize: 12, height: 30, margin: 0 });
+        } catch (err) { console.error("Gagal membuat barcode:", err); }
+      }
+    }
+
+    // ── BOOKING SESI (di dashboard member) ───────────────
+    async function loadClientBookings() {
+      const wrap = document.getElementById("client-bookings");
+      if (!wrap) return;
+      const bookings = await fetchClientBookings();
+      if (!bookings.length) {
+        wrap.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada booking sesi foto. Yuk booking sekarang! 📸</p>`;
+        return;
+      }
+      wrap.innerHTML = bookings.map(b => {
+        const canCancel = b.status === "Menunggu Konfirmasi";
+        return `
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;padding:.7rem .85rem;border-radius:.8rem;border:1.5px solid #e5e7eb;background:#fafafa;">
+          <div style="flex:1;min-width:200px;">
+            <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+              <b style="font-size:.8rem;color:#1a1a1a;">${escapeHtml(b.package_name || "Paket Foto")}</b>
+              ${bookingStatusBadge(b.status)}
+            </div>
+            <div style="font-size:.7rem;color:#6b7280;margin-top:.2rem;">${bookingDateTimeLabel(b)}</div>
+            <div style="font-size:.7rem;color:#6b7280;">📍 ${escapeHtml(b.location || "-")} · 👥 ${Number(b.guests) || 1} org · <b style="color:#df4d00;">${fmtIDR(b.total)}</b></div>
+            <div class="font-mono" style="font-size:.62rem;color:#3a5c37;font-weight:800;margin-top:.15rem;">${escapeHtml(b.booking_id)}</div>
+          </div>
+          ${canCancel ? `<button onclick="cancelBookingUI('${escapeHtml(b.booking_id)}')" style="flex-shrink:0;background:#fee2e2;color:#b91c1c;font-size:.65rem;font-weight:800;padding:.4rem .85rem;border-radius:.6rem;border:none;cursor:pointer;">Batalkan</button>` : ""}
+        </div>`;
+      }).join("");
+    }
+
+    async function cancelBookingUI(id) {
+      if (!confirm("Batalkan booking ini? Aksi tidak bisa dibatalkan.")) return;
+      const res = await cancelBookingAction(id);
+      if (res && res.status === "success") {
+        showToast(res.message, "success");
+        loadClientBookings();
+      } else {
+        showToast(res ? res.message : "Gagal membatalkan.", "error");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await fetchSettings();
+      const user = enforceRoleSecurity("client", "login-member.html");
+      if (user) { fetchDashboardData("client", user.id); loadRewards(); loadClientBookings(); setupIdleDetector(); renderClientQrAndBarcode(user.id); }
+    });
+  </script>
+</body>
+</html>
