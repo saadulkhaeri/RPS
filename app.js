@@ -139,6 +139,19 @@ const MOCK_INITIAL_DATA = {
 };
 
 function initMockDb() {
+  // ── Bersihkan data LOKAL versi lama SEKALI (mis. dari era mode-lokal) ──
+  // Supaya data lama tidak "nimpa"/membingungkan saat cloud aktif. Data di
+  // Google Sheets (cloud) tidak terpengaruh. Setelah dibersihkan, browser
+  // mencatat versi ini supaya tidak menghapus data lagi di lain waktu.
+  try {
+    const STORAGE_V = "3";
+    if (localStorage.getItem("REREPHOTO_STORAGE_VERSION") !== STORAGE_V) {
+      ["REREPHOTO_MOCK_DB", "REREPHOTO_SETTINGS", "REREPHOTO_USER",
+       "REREPHOTO_ACTIVE_STAFF", "REREPHOTO_STAFF_CACHE", "REREPHOTO_PACKAGES_CACHE",
+       "REREPHOTO_HERO_BANNER"].forEach(function (k) { localStorage.removeItem(k); });
+      localStorage.setItem("REREPHOTO_STORAGE_VERSION", STORAGE_V);
+    }
+  } catch (e) {}
   const existing = localStorage.getItem("REREPHOTO_MOCK_DB");
   if (existing) {
     const db = JSON.parse(existing);
@@ -259,8 +272,10 @@ function handleInvalidSession() {
   showToast("Sesi kamu sudah tidak valid/kedaluwarsa. Silakan refresh halaman ini dan login ulang.", "error");
 }
 
-async function sendGasRequest(action, payload = {}, method = "POST") {
-  showLoadingSpinner(true);
+async function sendGasRequest(action, payload = {}, method = "POST", noSpinner = false) {
+  // noSpinner=true untuk panggilan latar belakang (mis. render awal landing)
+  // supaya halaman tidak nunggu spinner lama saat Google Apps Script lambat.
+  if (!noSpinner) showLoadingSpinner(true);
   try {
     const fullPayload = { ...payload };
     if (!fullPayload.token && PUBLIC_ACTIONS.indexOf(action) === -1) {
@@ -271,7 +286,7 @@ async function sendGasRequest(action, payload = {}, method = "POST") {
     if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.trim() === "" || GAS_WEB_APP_URL.includes("placeholder")) {
       await new Promise(r => setTimeout(r, 350));
       const res = executeMockBackend(action, fullPayload);
-      showLoadingSpinner(false);
+      if (!noSpinner) showLoadingSpinner(false);
       if (action !== "login" && isSessionInvalidResult(res)) handleInvalidSession();
       return res;
     }
@@ -287,12 +302,12 @@ async function sendGasRequest(action, payload = {}, method = "POST") {
     }
     const response = await fetch(url, options);
     const result = await response.json();
-    showLoadingSpinner(false);
+    if (!noSpinner) showLoadingSpinner(false);
     if (action !== "login" && isSessionInvalidResult(result)) handleInvalidSession();
     return result;
   } catch (error) {
     console.error("❌ Error Fetch GAS:", error);
-    showLoadingSpinner(false);
+    if (!noSpinner) showLoadingSpinner(false);
     showToast("Gagal terhubung ke Google Sheets. Menggunakan Mode Offline Lokal.", "error");
     return executeMockBackend(action, payload);
   }
