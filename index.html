@@ -120,6 +120,52 @@
     }
     /* ─────────────────────────────────────── */
   </style>
+
+  <!-- Fetch cloud DINI: mulai ambil tema/banner/paket dari cloud SEJAK HTML
+       baru mulai terbaca, supaya pas halaman tampil data sudah siap (atau
+       segera menyusul) — tidak ada lagi "tampilan default nunggu menit". -->
+  <script>
+    (function () {
+      try {
+        var url = "";
+        try { url = localStorage.getItem("REREPHOTO_GAS_URL") || ""; } catch (e) {}
+        if (!url) url = "https://script.google.com/macros/s/AKfycbwy5Fi5IOrQEc3p_dBp7cylvI-12vAU8IhmBw0pEMfGjzJnCPNqiCrWyDCdsbIa9Y_u/exec";
+        if (!/^https?:/i.test(url)) return;
+        window.__rereCloud = { done: false, settings: null, packages: null, got: 0 };
+        function q(action) {
+          return fetch(url + (url.indexOf("?") !== -1 ? "&" : "?") + "action=" + action + "&v=3&t=" + Date.now(), { method: "GET" })
+            .then(function (r) { return r.json(); })
+            .catch(function () { return null; });
+        }
+        function maybeDone() {
+          window.__rereCloud.got++;
+          if (window.__rereCloud.got >= 2) window.__rereCloud.done = true;
+        }
+        q("getSettings").then(function (s) {
+          window.__rereCloud.settings = (s && s.settings) || null;
+          // Terapkan tema + banner sesegera mungkin begitu tiba
+          try {
+            if (window.__rereCloud.settings) {
+              var st = { theme: window.__rereCloud.settings.ui_theme, font: window.__rereCloud.settings.ui_font, radius: window.__rereCloud.settings.ui_radius };
+              if (st.theme || st.font || st.radius) window.RereUI && window.RereUI.set(st);
+              if (window.__rereCloud.settings.hero_banner_url) {
+                localStorage.setItem("REREPHOTO_HERO_BANNER", window.__rereCloud.settings.hero_banner_url);
+                if (window.loadHeroBanner) window.loadHeroBanner(window.__rereCloud.settings.hero_banner_url);
+              }
+            }
+          } catch (e) {}
+          maybeDone();
+        });
+        q("getPackages").then(function (p) {
+          window.__rereCloud.packages = (p && p.packages) || null;
+          if (window.__rereCloud.packages && window.renderPackageCarousel) {
+            try { window.renderPackageCarousel(window.__rereCloud.packages); } catch (e) {}
+          }
+          maybeDone();
+        });
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
 
@@ -564,21 +610,31 @@
       loadHeroBanner(savedBanner || HERO_BANNER_EMBEDDED);
       renderPackageCarousel(getMockDb().packages || []);
       if (GAS_WEB_APP_URL) {
-        // Update dari cloud di background (noSpinner + timeout) → data cloud
-        // menggantikan tampilan begitu tiba. Kalau lambat/gagal, tampilan
-        // awal (bawaan/demo) tetap terlihat — tidak blank, tidak menunggu lama.
+        // Pakai hasil fetch DINI (di <head>) kalau sudah kebetulan siap —
+        // jadi tampilan cloud bisa langsung muncul tanpa jeda.
+        const cloud = window.__rereCloud;
         const withTimeout = function (pr, ms) {
           return Promise.race([pr, new Promise(function (r) { setTimeout(function () { r(null); }, ms); })]);
         };
-        withTimeout(sendGasRequest("getSettings", {}, "GET", true), 8000).then(function (s) {
+        const applySettings = function (s) {
           if (s && s.settings && s.settings.hero_banner_url) {
             localStorage.setItem("REREPHOTO_HERO_BANNER", s.settings.hero_banner_url);
             loadHeroBanner(s.settings.hero_banner_url);
           }
-        }).catch(function () {});
-        withTimeout(sendGasRequest("getPackages", {}, "GET", true), 8000).then(function (p) {
-          if (p && p.packages) renderPackageCarousel(p.packages);
-        }).catch(function () {});
+        };
+        const applyPackages = function (p) {
+          if (p && p.packages && p.packages.length) renderPackageCarousel(p.packages);
+        };
+        if (cloud && cloud.done) {
+          if (cloud.settings) applySettings({ settings: cloud.settings });
+          if (cloud.packages) applyPackages({ packages: cloud.packages });
+        } else {
+          // Fetch dini belum selesai → lanjutkan sendiri di background dengan timeout.
+          if (cloud && cloud.settings) applySettings({ settings: cloud.settings });
+          if (cloud && cloud.packages) applyPackages({ packages: cloud.packages });
+          withTimeout(sendGasRequest("getSettings", {}, "GET", true), 8000).then(applySettings).catch(function () {});
+          withTimeout(sendGasRequest("getPackages", {}, "GET", true), 8000).then(applyPackages).catch(function () {});
+        }
       }
     });
 
@@ -632,5 +688,5 @@
       }
     }
   </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25de048c963385d',t:'MTc4NTg0OTgwMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25e0174de6cfdff',t:'MTc4NTg1MTE1OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
