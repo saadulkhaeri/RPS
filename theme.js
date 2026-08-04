@@ -103,6 +103,39 @@
     }
   }
 
+  // Cache tema cloud di localStorage → kunjungan berikutnya LANGSUNG tampil
+  // tema owner (tanpa flash "tampilan default" & tanpa nunggu cloud).
+  var CACHE_KEY = "REREPHOTO_UI_CACHE";
+  function cacheState(s) {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), s: s })); } catch (e) {}
+  }
+  function applyAndCache(s) {
+    applyState(s);
+    cacheState(s);
+    return s;
+  }
+  function applyCachedIfAny() {
+    try {
+      var c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      if (c && c.s && THEMES[c.s.theme] && FONTS[c.s.font] && RADII[c.s.radius]) {
+        // Cache maksimal 30 hari
+        if (Date.now() - (Number(c.t) || 0) < 30 * 864e5) applyState(c.s);
+      }
+    } catch (e) {}
+  }
+
+  // Terapkan pengaturan tema dari objek settings (dipakai fetchCloudUi &
+  // hasil fetch dini di head index.html). Mengembalikan true kalau berubah.
+  function applyCloudSettings(s) {
+    if (!s) return false;
+    var st = loadState(), changed = false;
+    if (s.ui_theme && THEMES[s.ui_theme]) { st.theme = s.ui_theme; changed = true; }
+    if (s.ui_font && FONTS[s.ui_font]) { st.font = s.ui_font; changed = true; }
+    if (s.ui_radius && RADII[s.ui_radius]) { st.radius = s.ui_radius; changed = true; }
+    if (changed) applyAndCache(st);
+    return changed;
+  }
+
   // ── API untuk Dashboard Owner (akses-owner.html) ───────────
   window.RereUI = {
     THEMES: THEMES,
@@ -118,7 +151,7 @@
         if (partial.radius !== undefined) s.radius = partial.radius;
       }
       saveState(s);
-      applyState(s);
+      applyAndCache(s);
       return s;
     },
     reset: function () {
@@ -142,12 +175,7 @@
       var s = null;
       try { var db = JSON.parse(localStorage.getItem("REREPHOTO_MOCK_DB") || "null"); s = db && db.settings; } catch (e) {}
       if (!s) { try { s = JSON.parse(localStorage.getItem("REREPHOTO_SETTINGS") || "null"); } catch (e) {} }
-      if (s) {
-        if (s.ui_theme && THEMES[s.ui_theme]) { st.theme = s.ui_theme; changed = true; }
-        if (s.ui_font && FONTS[s.ui_font]) { st.font = s.ui_font; changed = true; }
-        if (s.ui_radius && RADII[s.ui_radius]) { st.radius = s.ui_radius; changed = true; }
-      }
-      if (changed) { applyState(st); }
+      if (s && applyCloudSettings(s)) changed = true;
       return changed;
     } catch (e) { return false; }
   }
@@ -162,26 +190,30 @@
         : (localStorage.getItem("REREPHOTO_GAS_URL") || "");
     } catch (e) {}
     if (!gasUrl || !/^https?:/i.test(gasUrl)) return;
+    // Timeout: kalau cloud lambat (cold start), jangan biarkan halaman nunggu —
+    // tampilan saat ini (bawaan/cache) tetap dipakai.
+    var withTimeout = function (pr, ms) {
+      return Promise.race([pr, new Promise(function (r) { setTimeout(function () { r(null); }, ms); })]);
+    };
     try {
-      fetch(gasUrl + (gasUrl.indexOf("?") !== -1 ? "&" : "?") + "action=getSettings", { method: "GET" })
+      withTimeout(fetch(gasUrl + (gasUrl.indexOf("?") !== -1 ? "&" : "?") + "action=getSettings&v=3&t=" + Date.now(), { method: "GET" })
         .then(function (r) { return r.json(); })
         .then(function (res) {
-          if (res && res.status === "success" && res.settings) {
-            var s = res.settings, st = loadState(), changed = false;
-            if (s.ui_theme && THEMES[s.ui_theme]) { st.theme = s.ui_theme; changed = true; }
-            if (s.ui_font && FONTS[s.ui_font]) { st.font = s.ui_font; changed = true; }
-            if (s.ui_radius && RADII[s.ui_radius]) { st.radius = s.ui_radius; changed = true; }
-            if (changed) applyState(st);
-          }
-        }).catch(function () {});
+          if (res && res.status === "success" && res.settings) applyCloudSettings(res.settings);
+        }), 8000).catch(function () {});
     } catch (e) {}
   }
 
   // Terapkan otomatis saat halaman dibuka (semua halaman)
   function initUi() {
-    applyState(loadState());
-    readGlobalState(); // baca pengaturan global (dari DB lokal / settings)
-    fetchCloudUi();    // kalau cloud aktif, ambil dari Google Sheets
+    applyState(loadState());        // 1) tema lokal (kalau user pernah pilih sendiri)
+    applyCachedIfAny();             // 2) cache tema cloud → langsung tampil tanpa flash
+    readGlobalState();              // 3) baca pengaturan global tersimpan
+    // 4) kalau fetch dini (head index.html) sudah kebetulan selesai, pakai itu
+    try {
+      if (window.__rereCloud && window.__rereCloud.settings) applyCloudSettings(window.__rereCloud.settings);
+    } catch (e) {}
+    fetchCloudUi();                 // 5) ambil terbaru dari cloud (dengan timeout)
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initUi);
