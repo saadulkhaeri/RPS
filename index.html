@@ -318,8 +318,8 @@
 
   </footer>
 
-  <script src="app.js"></script>
-  <script src="theme.js"></script>
+  <script src="app.js?v=3"></script>
+  <script src="theme.js?v=3"></script>
   <script>
     // Cover default kartu paket — desain bersih (bukan foto), ikut warna tema.
     // Kalau owner upload foto asli via Dashboard Owner → Paket, foto itu yang dipakai.
@@ -558,15 +558,27 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
       initMockDb();
-      // Pakai embedded dulu, lalu override dari owner jika ada
+      // Tampilkan cepat dulu (banner bawaan + paket lokal) — halaman langsung
+      // jadi, tidak menunggu cloud yang kadang lambat (cold start GAS).
       const savedBanner = localStorage.getItem("REREPHOTO_HERO_BANNER") || "";
       loadHeroBanner(savedBanner || HERO_BANNER_EMBEDDED);
       renderPackageCarousel(getMockDb().packages || []);
       if (GAS_WEB_APP_URL) {
-        const s = await sendGasRequest("getSettings", {}, "GET");
-        if (s?.settings?.hero_banner_url) { localStorage.setItem("REREPHOTO_HERO_BANNER", s.settings.hero_banner_url); loadHeroBanner(s.settings.hero_banner_url); }
-        const p = await sendGasRequest("getPackages", {}, "GET");
-        if (p?.packages) renderPackageCarousel(p.packages);
+        // Update dari cloud di background (noSpinner + timeout) → data cloud
+        // menggantikan tampilan begitu tiba. Kalau lambat/gagal, tampilan
+        // awal (bawaan/demo) tetap terlihat — tidak blank, tidak menunggu lama.
+        const withTimeout = function (pr, ms) {
+          return Promise.race([pr, new Promise(function (r) { setTimeout(function () { r(null); }, ms); })]);
+        };
+        withTimeout(sendGasRequest("getSettings", {}, "GET", true), 8000).then(function (s) {
+          if (s && s.settings && s.settings.hero_banner_url) {
+            localStorage.setItem("REREPHOTO_HERO_BANNER", s.settings.hero_banner_url);
+            loadHeroBanner(s.settings.hero_banner_url);
+          }
+        }).catch(function () {});
+        withTimeout(sendGasRequest("getPackages", {}, "GET", true), 8000).then(function (p) {
+          if (p && p.packages) renderPackageCarousel(p.packages);
+        }).catch(function () {});
       }
     });
 
@@ -620,5 +632,5 @@
       }
     }
   </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25de048c963385d',t:'MTc4NTg0OTgwMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
