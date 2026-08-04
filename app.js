@@ -6,7 +6,18 @@
  */
 
 const RERE_BRANDING = { appName: "Rere Photo", logoUrl: "logo.svg" };
-let GAS_WEB_APP_URL = localStorage.getItem("REREPHOTO_GAS_URL") || "";
+// ═══ KONFIGURASI CLOUD (Google Apps Script) ═══════════════════
+// 1) GAS_WEB_APP_URL_DEFAULT: tempel URL Web App kamu di sini (di antara
+//    tanda kutip). Begitu terisi, SEMUA perangkat otomatis pakai cloud ini
+//    tanpa perlu set manual — data & tampilan jadi sinkron global.
+// 2) Kalau kosong, website jalan mode lokal (data di browser per perangkat).
+let GAS_WEB_APP_URL_DEFAULT = "https://script.google.com/macros/s/AKfycbwy5Fi5IOrQEc3p_dBp7cylvI-12vAU8IhmBw0pEMfGjzJnCPNqiCrWyDCdsbIa9Y_u/exec";
+let GAS_WEB_APP_URL = localStorage.getItem("REREPHOTO_GAS_URL") || GAS_WEB_APP_URL_DEFAULT;
+// Helper biar halaman lain (theme.js) ikut memakai URL yang sama.
+function getResolvedGasUrl() {
+  return localStorage.getItem("REREPHOTO_GAS_URL") || GAS_WEB_APP_URL_DEFAULT || "";
+}
+if (typeof window !== "undefined") window.getResolvedGasUrl = getResolvedGasUrl;
 
 // ============================================================================
 // 0. KEAMANAN TAMPILAN: ESCAPE HTML & VALIDASI URL
