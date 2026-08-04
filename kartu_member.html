@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kartu Member - Rere Photo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Montserrat', sans-serif; background:#f1eedb; margin:0; }
+    .card-page { max-width: 460px; margin: 2rem auto; padding: 0 1rem; }
+    .id-card {
+      background: linear-gradient(135deg, #2d4a2c 0%, #3a5c37 55%, #feb702 130%);
+      border-radius: 1.3rem; color: #fff; padding: 1.6rem 1.5rem;
+      box-shadow: 0 18px 40px rgba(0,0,0,.28); position: relative; overflow: hidden;
+    }
+    .id-card::after { content: "★"; position: absolute; right: -30px; top: -30px; font-size: 9rem; opacity: .07; }
+    .id-card .brand { display:flex; align-items:center; gap:.6rem; }
+    .id-card .brand span { font-weight: 900; font-size: 1rem; letter-spacing: .02em; }
+    .id-card .brand small { display:block; font-size:.58rem; opacity:.75; letter-spacing:.18em; text-transform:uppercase; }
+    .id-card .member-block { display:flex; align-items:center; gap:1rem; margin-top:1.4rem; }
+    .id-card .avatar {
+      width: 74px; height: 74px; border-radius: 1.1rem; background: rgba(255,255,255,.14);
+      display:flex; align-items:center; justify-content:center; font-size: 2.2rem; flex: none;
+      border: 2px solid rgba(255,255,255,.35);
+    }
+    .id-card .name { font-size: 1.25rem; font-weight: 900; line-height: 1.15; }
+    .id-card .meta { font-size: .68rem; opacity: .85; margin-top:.2rem; font-weight: 600; }
+    .id-card .points-row { display:flex; justify-content: space-between; align-items:center; margin-top: 1.3rem;
+      background: rgba(255,255,255,.12); border-radius: 1rem; padding: .7rem 1rem; }
+    .id-card .points-val { font-size: 1.6rem; font-weight: 900; color:#feb702; }
+    .id-card .tier { font-weight: 800; font-size: .78rem; background: rgba(254,183,2,.18); color:#feb702; padding:.3rem .8rem; border-radius:999px; }
+    .id-card .foot { display:flex; justify-content: space-between; align-items:center; margin-top: 1.2rem; }
+    .id-card .idnum { font-family: 'Courier New', monospace; font-size: .8rem; letter-spacing: .12em; font-weight: 800; }
+    .id-card .qr { background:#fff; border-radius:.7rem; padding:.35rem; width:58px; height:58px; display:flex; align-items:center; justify-content:center; }
+    .id-card .qr img { width: 100%; height: 100%; }
+    .actions { display:flex; gap:.6rem; justify-content:center; margin-top:1.4rem; flex-wrap:wrap; }
+    .btn { display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1.2rem; border-radius:.7rem; font-weight:800; font-size:.78rem; text-decoration:none; cursor:pointer; border:none; }
+    .btn-green { background:#3a5c37; color:#fff; }
+    .btn-gray { background:#f1f5f9; color:#334155; }
+    @media print { body { background:#fff; } .no-print { display:none !important; } .card-page { margin:0 auto; } .id-card { box-shadow:none; } }
+  </style>
+</head>
+<body>
+  <div class="card-page">
+    <div class="actions no-print" style="margin-bottom:1rem;">
+      <button class="btn btn-green" onclick="window.print()">🖨️ Cetak Kartu</button>
+      <a class="btn btn-gray" href="akses-owner.html">← Kembali</a>
+    </div>
+    <div id="card-holder"></div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    (function () {
+      const staff = JSON.parse(localStorage.getItem("REREPHOTO_ACTIVE_STAFF") || "null");
+      const admin = JSON.parse(localStorage.getItem("REREPHOTO_USER") || "null");
+      if (!((staff && staff.role === "staff") || (admin && admin.role === "admin"))) window.location.href = "portal-karyawan.html";
+    })();
+
+    const id = new URLSearchParams(window.location.search).get("id");
+
+    async function load() {
+      const res = await sendGasRequest("getMembers", {}, "GET");
+      const member = (res && res.status === "success") ? (res.members || []).find(function (m) { return m.id === id; }) : null;
+      if (!member) {
+        document.getElementById("card-holder").innerHTML = `<div style="text-align:center;color:#94a3b8;padding:2rem;">Member tidak ditemukan.</div>`;
+        return;
+      }
+      const genderEmoji = member.gender === "L" ? "👨" : member.gender === "P" ? "👩" : "👤";
+      const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=" + encodeURIComponent(member.id);
+      document.getElementById("card-holder").innerHTML = `
+        <div class="id-card">
+          <div class="brand"><span>RERE PHOTO<small>Member Loyalty Pass</small></span></div>
+          <div class="member-block">
+            <div class="avatar">${genderEmoji}</div>
+            <div>
+              <div class="name">${escapeHtml(member.name || "-")}</div>
+              <div class="meta">ID: <b>${escapeHtml(member.id)}</b></div>
+              <div class="meta">${member.gender === "L" ? "LAKI-LAKI" : member.gender === "P" ? "PEREMPUAN" : ""}${member.birth_date ? " · 🎂 " + escapeHtml(member.birth_date) : ""}</div>
+            </div>
+          </div>
+          <div class="points-row">
+            <div><div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;opacity:.75;font-weight:800;">Total Poin</div><div class="points-val">${Number(member.points) || 0}</div></div>
+            <span class="tier">${escapeHtml(member.tier || "Silver")}</span>
+          </div>
+          <div class="foot">
+            <div><div style="font-size:.55rem;opacity:.7;letter-spacing:.1em;text-transform:uppercase;font-weight:800;">Member ID</div><div class="idnum">${escapeHtml(member.id)}</div></div>
+            <div class="qr"><img src="${qrUrl}" alt="QR" onerror="this.style.display='none'"></div>
+          </div>
+        </div>`;
+    }
+    load();
+  </script>
+</body>
+</html>

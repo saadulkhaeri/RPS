@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Sesi Foto - Rere Photo</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=JetBrains+Mono:wght@400;600&display=swap');
+    body { font-family: 'Montserrat', sans-serif; background-color: #f1eedb; color: #0F172A; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .font-display { font-family: 'Montserrat', sans-serif; font-weight: 900; }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    img { max-width: 100%; height: auto; }
+
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .grid-responsive { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+
+    /* Kartu paket radio */
+    .pkg-card { cursor: pointer; border: 2.5px solid #d4e8d4; border-radius: 1rem; background:#fff; transition: all .18s ease; position: relative; }
+    .pkg-card:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(58,92,55,.12); }
+    .pkg-card.selected { border-color: #3a5c37; box-shadow: 0 0 0 3px rgba(58,92,55,.15); background:#f6fbf3; }
+    .pkg-card .pkg-check { position:absolute; top:.6rem; right:.6rem; width:1.4rem; height:1.4rem; border-radius:999px; background:#e5e7eb; color:transparent; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:900; }
+    .pkg-card.selected .pkg-check { background:#3a5c37; color:#fff; }
+
+    @media (max-width: 640px) {
+      .sm-stack { flex-direction: column !important; }
+      .sm-full  { width: 100% !important; }
+      table { font-size: .75rem; }
+      th, td { padding: .5rem .6rem !important; white-space: nowrap; }
+    }
+    @media (max-width: 768px) { .md-stack { flex-direction: column !important; } }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-[#edf5ed] selection:text-white">
+
+  <header style="background:#3a5c37;border-bottom:2px solid #2d4a2c;position:sticky;top:0;z-index:50;box-shadow:0 4px 16px rgba(58,92,55,.35);">
+    <div style="max-width:1100px;margin:0 auto;padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;">
+      <a href="index.html" style="text-decoration:none;display:flex;align-items:center;gap:.5rem;">
+        <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjE3MTAiIGhlaWdodD0iNzE2Ij4KCjxwYXRoIGQ9Ik0wIDAgQzM3LjU5OTM3NSAtMC4wNjE4NzUgNzUuMTk4NzUgLTAuMTIzNzUgMTEzLjkzNzUgLTAuMTg3NSBDMTI1Ljc2OTcyNDEyIC0wLjIxNDgxMjAxIDEzNy42MDE5NDgyNCAtMC4yNDIxMjQwMiAxNDkuNzkyNzI0NjEgLTAuMjcwMjYzNjcgQzE2NC4zNDI4OTU1MSAtMC4yODM4MTM0OCAxNjQuMzQyODk1NTEgLTAuMjgzODEzNDggMTcxLjE3NDA4NzUyIC0wLjI4NjMzMTE4IEMxNzUuOTAyMTk5MzMgLTAuMjg5MTA0MDQgMTgwLjYzMDIwODA3IC0wLjMwMDI1NzM1IDE4NS4zNTgyOTE2MyAtMC4zMTY3MjY2OCBDMTkxLjQyMDA4OTI1IC0wLjMzNzU1NjYzIDE5Ny40ODE3NDA1NSAtMC4zNDM0Mjc1MyAyMDMuNTQzNTcwNjQgLTAuMzM5MjE2ODMgQzIwNS43NDg5ODIyNyAtMC4zNDAwOTUxNSAyMDcuOTU0Mzk5OSAtMC4zNDU4OTI2IDIxMC4xNTk3ODAzOCAtMC4zNTc2NDUzOSBDMjMwLjE1NzU0NzkzIC0wLjQ1OTEyMzA0IDI1MC4xMDYxNTQyIDEuMTQxMDU2NTQgMjY5LjYyNSA1LjY4NzUgQzI3MC43MzM0MzI2MiA1Ljk0MDk2MTkxIDI3MS44NDE4NjUyMyA2LjE5NDQyMzgzIDI3Mi45ODM4ODY3MiA2LjQ1NTU2NjQxIEMzMDguNDc2NjE0NjggMTQuODk3MDUyNzEgMzQ0LjU1NjE3MjA0IDMyLjE2MTE0ODg2IDM2OCA2MSBDMzY4Ljc2MDU0Njg4IDYxLjkyMjk2ODc1IDM2OS41MjEwOTM3NSA2Mi44NDU5Mzc1IDM3MC4zMDQ2ODc1IDYzLjc5Njg3NSBDMzkzLjIwNDc3MzY3IDkyLjE3MDAyMzAyIDQwMy40MDU1NDE5NSAxMjYuMzY1OTQxMTYgNDAzLjMxNTY3MzgzIDE2Mi41Mjk1NDEwMiBDNDAzLjMxMjUyNDk1IDE2NS4xNjY2MDQwOSA0MDMuMzM2MDI3NCAxNjcuODAyNTI4NTEgNDAzLjM2MTMyODEyIDE3MC40Mzk0NTMxMiBDNDAzLjQxODg3MzMzIDE4NS42MzEyOTk3MiA0MDEuODk2MzQ5MjQgMjAwLjY1MzY2ODQyIDM5Ny4yNSAyMTUuMTg3NSBDMzk2Ljk5Mzk1OTk2IDIxNi4wMTAwODMwMSAzOTYuNzM3OTE5OTIgMjE2LjgzMjY2NjAyIDM5Ni40NzQxMjEwOSAyMTcuNjgwMTc1NzggQzM4My40MzE2OTUyMyAyNTguMzY0MDUzOTMgMzU1LjI4NDczNzExIDI4Ny4xMjgxODg1NiAzMTggMzA3IEMzMjEuMDIzNjM5OTggMzEyLjg4NzM3NTkzIDMyNC41MDc2NDg1MiAzMTguMTczMDgxMzQgMzI4LjQ0OTIxODc1IDMyMy40ODA0Njg3NSBDMzMxLjgxNTMxNzQyIDMyOC4wNzAxMDIyNiAzMzQuOTg5MzkwMDkgMzMyLjc5MjYzNzg3IDMzOC4xODc1IDMzNy41IEMzMzguODM0NzcwNTEgMzM4LjQ1MjM3NTQ5IDMzOS40ODIwNDEwMiAzMzkuNDA0NzUwOTggMzQwLjE0ODkyNTc4IDM0MC4zODU5ODYzMyBDMzQxLjQ2MjcyNTg4IDM0Mi4zMTk5Mjk5OSAzNDIuNzc2MjAyOTYgMzQ0LjI1NDA5MzEzIDM0NC4wODkzNTU0NyAzNDYuMTg4NDc2NTYgQzM0Ni45NjczMjQxNyAzNTAuNDIzNDIyNTggMzQ5Ljg1NzYyMDg1IDM1NC42NDk4ODc4IDM1Mi43NSAzNTguODc1IEMzNTMuMjgxODE4ODUgMzU5LjY1MjA2Mjk5IDM1My44MTM2Mzc3IDM2MC40MjkxMjU5OCAzNTQuMzYxNTcyMjcgMzYxLjIyOTczNjMzIEMzNTkuMTE3MTk5NzUgMzY4LjE3NTg3MDIgMzYzLjg4NTIzNTUyIDM3NS4xMTM0NDEyNCAzNjguNjU3MjI2NTYgMzgyLjA0ODMzOTg0IEMzNzAuOTM5MDg1MTkgMzg1LjM2NDkxNzY0IDM3My4yMTk0NTc1NSAzODguNjgyNTE3MSAzNzUuNSAzOTIgQzM3Ni40MTY2NTk3NiAzOTMuMzMzMzM4MDggMzc3LjMzMzMyNjQyIDM5NC42NjY2NzE0MiAzNzguMjUgMzk2IEMzODMuNzUgNDA0IDM4My43NSA0MDQgMzg1LjEyNTQ4ODI4IDQwNi4wMDA3MzI0MiBDMzg2LjA0MDQ5OTcgNDA3LjMzMTY0MzM1IDM4Ni45NTU1Mzg2OSA0MDguNjYyNTM1MzQgMzg3Ljg3MDYwNTQ3IDQwOS45OTM0MDgyIEMzOTAuMTg3ODI1ODEgNDEzLjM2MzY0ODA0IDM5Mi41MDQ1MzkzMiA0MTYuNzM0MjM0MzMgMzk0LjgyMDMxMjUgNDIwLjEwNTQ2ODc1IEMzOTUuMjg1MjYxMjMgNDIwLjc4MjA2NTQzIDM5NS43NTAyMDk5NiA0MjEuNDU4NjYyMTEgMzk2LjIyOTI0ODA1IDQyMi4xNTU3NjE3MiBDMzk3LjE1MDU0MTMzIDQyMy40OTY4NTAxOCAzOTguMDcxMjg4NDMgNDI0LjgzODMxNDA0IDM5OC45OTE0NTUwOCA0MjYuMTgwMTc1NzggQzQwMS4yMDY5NDMzMyA0MjkuNDA3NzM2NjEgNDAzLjQzNDc0MTkxIDQzMi42MjUyODM2IDQwNS42OTE0MDYyNSA0MzUuODI0MjE4NzUgQzQwNi4xMTI3Njg1NSA0MzYuNDI0MDM1NjQgNDA2LjUzNDEzMDg2IDQzNy4wMjM4NTI1NCA0MDYuOTY4MjYxNzIgNDM3LjY0MTg0NTcgQzQwOC4xMTQ2ODYzNyA0MzkuMjcxNDk1MDEgNDA5LjI2NjE1ODcgNDQwLjg5NzU5MDA0IDQxMC40MTc5Njg3NSA0NDIuNTIzNDM3NSBDNDEyIDQ0NSA0MTIgNDQ1IDQxMiA0NDcgQzM5NC40NTgzMTcyIDQ0Ny4zNTExMjY2NCAzNzYuOTE3NzM3NjEgNDQ3LjYxNTI1Njc5IDM1OS4zNzMzMzk2NSA0NDcuNzc3MTgyNTggQzM1MS4yMjYxMjkyMiA0NDcuODU0MzgzMzQgMzQzLjA4MTEwNzU2IDQ0Ny45NTk1Mjg5OCAzMzQuOTM1MzAyNzMgNDQ4LjEzMTU5MTggQzMyNy44MzEzMzgzMiA0NDguMjgxNTc1ODEgMzIwLjcyODk1OTA3IDQ0OC4zNzc5Nzk0NSAzMTMuNjIzNDU1MzUgNDQ4LjQxMTMyNzQyIEMzMDkuODYzNTMxMiA0NDguNDMwODEyMDggMzA2LjEwODEzOTQzIDQ0OC40NzYyMzEwOSAzMDIuMzQ5Njc2MTMgNDQ4LjU4NTk1MDg1IEMyNzcuNjU5Mjg1MzMgNDQ5LjI3OTI2ODkxIDI3Ny42NTkyODUzMyA0NDkuMjc5MjY4OTEgMjcxLjc4MzU5OTg1IDQ0My43NTYzNzgxNyBDMjY5LjI0NTc1MTkgNDQwLjY5MzQ0NDExIDI2Ny40MzA0ODA3MiA0MzcuNDYzNjExMDkgMjY1LjgzNjU1NzM5IDQzMy44MzAzMDg5MSBDMjY0LjYxMjkxNTQgNDMxLjE1MzA5NTI4IDI2Mi45NDc4MDY3NCA0MjguODMyOTcyOSAyNjEuMjUgNDI2LjQzNzUgQzI2MC42MTk2NDg0NCA0MjUuNDc4NDM3NSAyNTkuOTg5Mjk2ODcgNDI0LjUxOTM3NSAyNTkuMzM5ODQzNzUgNDIzLjUzMTI1IEMyNTYuMjE5MzA4MzcgNDE4Ljc5NjA2MDA1IDI1My4wMDk5OTA0MiA0MTQuMTIwODg3NzUgMjQ5LjgxMjUgNDA5LjQzNzUgQzI0OS4xNjMyOTU5IDQwOC40ODYzMzMwMSAyNDguNTE0MDkxOCA0MDcuNTM1MTY2MDIgMjQ3Ljg0NTIxNDg0IDQwNi41NTUxNzU3OCBDMjQxLjU3MDI2NjYxIDM5Ny4zNjU0NzI5NyAyMzUuMjg2NTQ3NjQgMzg4LjE4MTc3MDI2IDIyOSAzNzkgQzIyNi44NzQ3NjA0NSAzNzUuODk1OTk3MjQgMjI0Ljc0OTc1MTc1IDM3Mi43OTE4MzY2OSAyMjIuNjI1IDM2OS42ODc1IEMyMjIuMDk5NTQ1OSAzNjguOTE5OTQzODUgMjIxLjU3NDA5MTggMzY4LjE1MjM4NzcgMjIxLjAzMjcxNDg0IDM2Ny4zNjE1NzIyNyBDMjE4LjAyNDExMjIyIDM2Mi45NjQ4Mzc2IDIxNS4wMjExNzcyNyAzNTguNTY0MzA1NSAyMTIuMDIzNDM3NSAzNTQuMTYwMTU2MjUgQzIxMS4zNTM2MDg0IDM1My4xNzYzNTk4NiAyMTAuNjgzNzc5MyAzNTIuMTkyNTYzNDggMjA5Ljk5MzY1MjM0IDM1MS4xNzg5NTUwOCBDMjA4LjY5OTAwMDI1IDM0OS4yNzY5Mjk0NiAyMDcuNDA1MDE2MSAzNDcuMzc0NDQ4OTYgMjA2LjExMTgxNjQxIDM0NS40NzE0MzU1NSBDMjAzLjQ3ODE3NzgxIDM0MS42MDI0NTI0OSAyMDAuODMzOTE2NTYgMzM3Ljc1NjE0ODM4IDE5OC4wNjI1IDMzMy45ODQzNzUgQzE5NiAzMzEgMTk2IDMzMSAxOTYgMzI5IEMxNzMuMjMgMzI5IDE1MC40NiAzMjkgMTI3IDMyOSBDMTI3IDM2Ny45NCAxMjcgNDA2Ljg4IDEyNyA0NDcgQzg1LjA5IDQ0NyA0My4xOCA0NDcgMCA0NDcgQzAgMjk5LjQ5IDAgMTUxLjk4IDAgMCBaIE0xMjcgMTAwIEMxMjcgMTQzLjIzIDEyNyAxODYuNDYgMTI3IDIzMSBDMTQzLjg2MDkzNzUgMjMxLjA2MTg3NSAxNDMuODYwOTM3NSAyMzEuMDYxODc1IDE2MS4wNjI1IDIzMS4xMjUgQzE2NC41NTk4MDcxMyAyMzEuMTQzMjA4MDEgMTY4LjA1NzExNDI2IDIzMS4xNjE0MTYwMiAxNzEuNjYwNDAwMzkgMjMxLjE4MDE3NTc4IEMyMTguMDc3NDkzNTggMjMyLjMyNTQxMzM0IDIxOC4wNzc0OTM1OCAyMzIuMzI1NDEzMzQgMjU3LjgyMDMxMjUgMjExLjMxMjUgQzI3MC44MTU2NDY3MyAxOTcuNTI1MzM1MzcgMjc1LjU2MTAwNTgxIDE4MS44MjQ4NDA1OSAyNzUuMzQ2OTIzODMgMTYzLjAzNTg4ODY3IEMyNzQuODY1ODgwMDggMTQ3LjEyNjI4NTczIDI2OS43NzI3NjA4OSAxMzAuNjQzNDUzMTEgMjU4LjM3MTA5Mzc1IDExOS4wMTk1MzEyNSBDMjQyLjA1NDMxNzI4IDEwNS4xMjIwNDYxOCAyMjEuNjE3MjA3IDk5Ljc4Mjk3MzM3IDIwMC40NTA5Mjc3MyA5OS44ODY0NzQ2MSBDMTk5LjYzNzA0MzcgOTkuODg2MzU0MDcgMTk4LjgyMzE1OTY2IDk5Ljg4NjIzMzU0IDE5Ny45ODQ2MTI0NiA5OS44ODYxMDkzNSBDMTk1LjM4NDI0MzggOTkuODg2ODQ3OTQgMTkyLjc4Mzk0OTM3IDk5Ljg5NDQyNzQyIDE5MC4xODM1OTM3NSA5OS45MDIzNDM3NSBDMTg4LjU2NDQ5NDE3IDk5LjkwMzgxNjQ0IDE4Ni45NDUzOTQxIDk5LjkwNDgzNTE0IDE4NS4zMjYyOTM5NSA5OS45MDUzOTU1MSBDMTc5LjM2MzM1NTMxIDk5LjkxMDYxMDQ1IDE3My40MDA0MjY5IDk5LjkyNDU3MTY5IDE2Ny40Mzc1IDk5LjkzNzUgQzE1NC4wOTMxMjUgOTkuOTU4MTI1IDE0MC43NDg3NSA5OS45Nzg3NSAxMjcgMTAwIFogIiBmaWxsPSIjRkZGRkZGIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTAsMTE0KSIvPgoKPHBhdGggZD0iTTAgMCBDMS4zNzczODM0MiAwLjAwMDgxNTczIDEuMzc3MzgzNDIgMC4wMDA4MTU3MyAyLjc4MjU5Mjc3IDAuMDAxNjQ3OTUgQzMzLjI5NjY3NSAwLjA4NDM3NjAyIDYxLjkxNjg0ODYgNS41MTI3MzU4MyA4OS42ODc1IDE4LjM3NSBDOTAuMzI2MjMwNDcgMTguNjY0ODc3OTMgOTAuOTY0OTYwOTQgMTguOTU0NzU1ODYgOTEuNjIzMDQ2ODggMTkuMjUzNDE3OTcgQzEwNy4xNzU1NDQwOSAyNi4zNjE1ODk3MiAxMzMuNzU1NTg1MDEgNDAuNTExMTcwMDMgMTQxLjY4NzUgNTYuMzc1IEMxNDIuMTI1NzgxMjUgNTUuNjQ3OTY4NzUgMTQyLjU2NDA2MjUgNTQuOTIwOTM3NSAxNDMuMDE1NjI1IDU0LjE3MTg3NSBDMTU0Ljg4NjIxMTg0IDM1LjM1MjY1MTk2IDE3MC4wOTg3NDA3NiAyNC42OTc5NDI3NSAxOTEuNjg3NSAxOS4zNzUgQzIxMi4yMTcwOTU5MyAxNS42ODI5NjQ5OSAyMzQuMjM1NDIzMyAxOC44NjgxODAwNSAyNTEuOTM3NSAzMC4xMjUgQzI2OC4yNzUyMjMwNiA0MS42NDEwNDk4NSAyNzcuNjc2OTYzMDEgNTcuNzIzMjU2MTMgMjgxLjE4MzU5Mzc1IDc3LjMyMDMxMjUgQzI4NC4xNDg0MzA1OCA5OC42MjMyMTQxNiAyNzkuNzgxMTEwMjkgMTE5LjA3NzIwMzgyIDI2Ni45MjU3ODEyNSAxMzYuNDcyNjU2MjUgQzI1Ni4wNzk3Njc3MSAxNTAuNTM2NTA5NzYgMjM5LjI0MTEwOTI4IDE1OS43MzgyNDgzNiAyMjEuNjg3NSAxNjIuMzc1IEMyMTcuMzUwMTIyNTYgMTYyLjY0NzU1ODc5IDIxMy4wMzIxNzAwNSAxNjIuNjU0ODk0NTIgMjA4LjY4NzUgMTYyLjYyNSBDMjA3LjAwMTQwNjI1IDE2Mi42MzY2MDE1NiAyMDcuMDAxNDA2MjUgMTYyLjYzNjYwMTU2IDIwNS4yODEyNSAxNjIuNjQ4NDM3NSBDMTk4Ljc2NjQwMzg4IDE2Mi42MzMyMTU5IDE5Mi45ODQ4MjE2NyAxNjIuMDU2MDY0NjggMTg2LjY4NzUgMTYwLjM3NSBDMTg2LjY2MjQ0Mzg1IDE2MS40NjMyOTEwMiAxODYuNjM3Mzg3NyAxNjIuNTUxNTgyMDMgMTg2LjYxMTU3MjI3IDE2My42NzI4NTE1NiBDMTg2LjUxNjM4MzQgMTY3Ljc2NTcxNTkgMTg2LjQxNjQ0OTQ1IDE3MS44NTg0NTM3MiAxODYuMzE1MTg1NTUgMTc1Ljk1MTE3MTg4IEMxODYuMjcyMjUzMDMgMTc3LjcxMjIwOTE4IDE4Ni4yMzA1NTUwMyAxNzkuNDczMjc3MDggMTg2LjE5MDE4NTU1IDE4MS4yMzQzNzUgQzE4Ni4xMzE0NTY0OCAxODMuNzg2NTUxNjUgMTg2LjA2ODA3NTg4IDE4Ni4zMzg1Nzk5OSAxODYuMDAzOTA2MjUgMTg4Ljg5MDYyNSBDMTg1Ljk4NzE5Mzc2IDE4OS42NTk4OTMxOSAxODUuOTcwNDgxMjYgMTkwLjQyOTE2MTM4IDE4NS45NTMyNjIzMyAxOTEuMjIxNzQwNzIgQzE4NS43ODQyOTMxOCAxOTcuNjU5MjA0OTggMTg1LjIyNTE3NzQyIDIwMy45MjI4NzA5NiAxODQuNjg3NSAyMTAuMzc1IEMxMDEuODU3NSAyMTAuMzc1IDE5LjAyNzUgMjEwLjM3NSAtNjYuMzEyNSAyMTAuMzc1IEMtNTcuMzc4MTY4ODEgMjMyLjcxMDgyNzk3IC00Ni40NzM3NDM4MSAyNDcuNDE2OTk2MjYgLTI0LjQzNzUgMjU3LjE4NzUgQzMuMTc1MTU3NTEgMjY3Ljg4NDYyODcxIDM2LjI2MTMwMTc4IDI2Ny43NzA4Njg0NCA2My42MjQ1MTE3MiAyNTYuMjk3ODUxNTYgQzczLjQxNzMxODM3IDI1MS45MTcxNjQwOSA4Mi4zMjE3ODcxNiAyNDYuMzgwNDIwMzkgOTAuNTI4MzIwMzEgMjM5LjQ3MzYzMjgxIEM5My42NDA5OTQ2MSAyMzYuOTA0NjAzNTMgOTQuNDU0MTYyMDggMjM2LjM3NSA5OC42ODc1IDIzNi4zNzUgQzEwMC45NTgyNTE5NSAyMzguMTc1NzgxMjUgMTAwLjk1ODI1MTk1IDIzOC4xNzU3ODEyNSAxMDMuNDI1NzgxMjUgMjQwLjY4NzUgQzEwNC4zMjg3Njk1MyAyNDEuNTk4ODY3MTkgMTA1LjIzMTc1NzgxIDI0Mi41MTAyMzQzNyAxMDYuMTYyMTA5MzggMjQzLjQ0OTIxODc1IEMxMDcuMTA4MTExNTUgMjQ0LjQyNDQ0MTcgMTA4LjA1NDA3NDg2IDI0NS4zOTk3MDIzNCAxMDkgMjQ2LjM3NSBDMTA5LjkyNDkwMjM0IDI0Ny4zMDk1NzAzMSAxMTAuODQ5ODA0NjkgMjQ4LjI0NDE0MDYyIDExMS44MDI3MzQzOCAyNDkuMjA3MDMxMjUgQzExNi4zNTIxMTExNyAyNTMuODMwNzc1OTcgMTIwLjc0NTIyMzc4IDI1OC41MzE5MDM2NiAxMjQuOTczMzg4NjcgMjYzLjQ0OTIxODc1IEMxMjguMjExMjM0NDMgMjY3LjA4Njg5NTM0IDEzMS43MTQzNTAzNCAyNzAuNDYzOTgxODEgMTM1LjE4NzUgMjczLjg3NSBDMTQwLjAwNjI1MTk1IDI3OC42MDc1NDg4NyAxNDQuNjQ3NjMwNjggMjgzLjM5Mjk0MzczIDE0OS4wNTMyMjI2NiAyODguNTEzNjcxODggQzE1MS40NjAxNTgyOSAyOTEuMjU1MDA0IDE1NC4wMjMyMjI1IDI5My44MjAwMDQxMiAxNTYuNjI1IDI5Ni4zNzUgQzE1Ny4zNjQ1OTk2MSAyOTcuMTA3ODMyMDMgMTU3LjM2NDU5OTYxIDI5Ny4xMDc4MzIwMyAxNTguMTE5MTQwNjIgMjk3Ljg1NTQ2ODc1IEMxNTkuMzA2MjMyMjkgMjk5LjAzMTAzNTI1IDE2MC40OTY1MDQ5OCAzMDAuMjAzMzg4MjYgMTYxLjY4NzUgMzAxLjM3NSBDMTQ3LjQ0NTg4MDI3IDMyNi40MTYxNTYxNCAxMTEuMTk2NjIyNjcgMzQyLjU4MjI0MjcxIDg0Ljc5MTAxNTYyIDM1MC4yMTE5MTQwNiBDODEuNzAyODYzNDYgMzUxLjA1NjIyMTY0IDc4LjYwNjY1OTQ0IDM1MS44NTE2ODEgNzUuNSAzNTIuNjI1IEM3NC41ODI5MTI2IDM1Mi44NTkxMjU5OCA3My42NjU4MjUyIDM1My4wOTMyNTE5NSA3Mi43MjA5NDcyNyAzNTMuMzM0NDcyNjYgQzU0LjM0MzI1NTQ1IDM1Ny42Njc1ODg1MyAzNS42MDAyNDUwNyAzNTguODc5OTEyOTIgMTYuNzc4MDc2MTcgMzU4Ljc2NjExMzI4IEMxMy42MjE3OTUxOCAzNTguNzQ5OTgzNjIgMTAuNDY2NzkwNTUgMzU4Ljc2NjExMTg1IDcuMzEwNTQ2ODggMzU4Ljc4NTE1NjI1IEMtMTEuMDA2MjkyNDcgMzU4LjgwNTAzNTM4IC0yOS4xNDY1MDU3IDM1Ny4xNjQ4NTcwOSAtNDYuOTM3NSAzNTIuNjI1IEMtNDcuOTY5MDcyMjcgMzUyLjM2NzUwOTc3IC00OS4wMDA2NDQ1MyAzNTIuMTEwMDE5NTMgLTUwLjA2MzQ3NjU2IDM1MS44NDQ3MjY1NiBDLTgwLjk5MjYyNTg1IDM0My45Mjk1MjQ5MiAtMTA5LjUwNTE3OTE2IDMzMC45NTQzNjMwMSAtMTMzLjMxMjUgMzA5LjM3NSBDLTEzNC4yNzY3MTg3NSAzMDguNTQyMjY1NjMgLTEzNS4yNDA5Mzc1IDMwNy43MDk1MzEyNSAtMTM2LjIzNDM3NSAzMDYuODUxNTYyNSBDLTE0Mi42ODA5OTE0NiAzMDEuMjA2MzIxMDEgLTE0OC4wOTUxMDAxMyAyOTUuMTYwNDE5ODYgLTE1My4zMTI1IDI4OC4zNzUgQy0xNTQuMDY0MDIzNDQgMjg3LjQyNzUzOTA2IC0xNTQuODE1NTQ2ODggMjg2LjQ4MDA3ODEyIC0xNTUuNTg5ODQzNzUgMjg1LjUwMzkwNjI1IEMtMTYxLjI5NDYxMjY3IDI3OC4xNjA4NDQ3MiAtMTY1LjkyMTgzOTI5IDI3MC41Mzk3NjA1NSAtMTcwLjMxMjUgMjYyLjM3NSBDLTE3MC44MzU4NTkzNyAyNjEuNDMzOTg0MzggLTE3MS4zNTkyMTg3NSAyNjAuNDkyOTY4NzUgLTE3MS44OTg0Mzc1IDI1OS41MjM0Mzc1IEMtMTgyLjkyNTQyNjE1IDIzOC44MTEzNjg4NiAtMTg5LjMyMjc5MjY5IDIxMy45MTYxMjM0NCAtMTg5LjU1MDc4MTI1IDE5MC40Njg3NSBDLTE4OS41NjA1NzUxIDE4OS42MzQ3MDEzOSAtMTg5LjU3MDM2ODk2IDE4OC44MDA2NTI3NyAtMTg5LjU4MDQ1OTU5IDE4Ny45NDEzMjk5NiBDLTE4OS43NDk4MjE0NSAxNjkuNzc1OTgwMDkgLTE4OS43Mzc5OTkxIDE1Mi4xMTQyOTk0NiAtMTg1LjMxMjUgMTM0LjM3NSBDLTE4NS4xMDM1MTA3NCAxMzMuNTE3OTM0NTcgLTE4NC44OTQ1MjE0OCAxMzIuNjYwODY5MTQgLTE4NC42NzkxOTkyMiAxMzEuNzc3ODMyMDMgQy0xNzcuNTc5MzYzNTMgMTAzLjYwNzE3MzEyIC0xNjMuMjc0NjYxMDYgNzguNDAyNjQ1MzIgLTE0My4zMTI1IDU3LjM3NSBDLTE0Mi44NDg5MjA5IDU2Ljg3ODg3MjA3IC0xNDIuMzg1MzQxOCA1Ni4zODI3NDQxNCAtMTQxLjkwNzcxNDg0IDU1Ljg3MTU4MjAzIEMtMTE2LjY4ODE0OTUzIDI5LjAxNTM0ODc3IC04My4yMTEwNzM1NiAxMi40NTU2MTc4OSAtNDcuNSA0LjU2MjUgQy00Ni42MTg3NjQ2NSA0LjM2NzYwOTg2IC00NS43Mzc1MjkzIDQuMTcyNzE5NzMgLTQ0LjgyOTU4OTg0IDMuOTcxOTIzODMgQy0yOS44ODYxNzI4OCAwLjg2MTc5NjA1IC0xNS4yMTYyNjE0NCAtMC4wMzQwNzcwNSAwIDAgWiBNLTUxLjMxMjUgMTA4LjM3NSBDLTU5LjY5NjU5NzAyIDExOC45NjYxNDY2NCAtNjguMzEyNSAxMzIuNDQ0ODIzMjggLTY4LjMxMjUgMTQ2LjM3NSBDLTIyLjExMjUgMTQ2LjM3NSAyNC4wODc1IDE0Ni4zNzUgNzEuNjg3NSAxNDYuMzc1IEM2Ny4zOTQxMzUwMiAxMjkuMjAxNTQwMDkgNjMuMjAzNTc0OTIgMTE3LjUzNTM3ODI5IDUwLjY4NzUgMTA1LjM3NSBDNTAuMDc1MTk1MzEgMTA0Ljc0MjA3MDMxIDQ5LjQ2Mjg5MDYyIDEwNC4xMDkxNDA2MyA0OC44MzIwMzEyNSAxMDMuNDU3MDMxMjUgQzM1LjEyNzE3MzExIDkwLjIxOTcxNjI0IDE2LjIwNzA2MTg1IDg2LjczMTQ2OTExIC0yLjEwODE1NDMgODYuOTA2NDk0MTQgQy0yMC43NDQ3MTY0OSA4Ny40NDYzNzc5MSAtMzguNjY4MzQzOTkgOTQuMjU2MDUzOTIgLTUxLjMxMjUgMTA4LjM3NSBaICIgZmlsbD0iI0ZGRkVGRSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTMzMC4zMTI1LDIwOC42MjUpIi8+Cgo8cGF0aCBkPSJNMCAwIEMxLjM3NzM4MzQyIDAuMDAwODE1NzMgMS4zNzczODM0MiAwLjAwMDgxNTczIDIuNzgyNTkyNzcgMC4wMDE2NDc5NSBDMzMuMjk2Njc1IDAuMDg0Mzc2MDIgNjEuOTE2ODQ4NiA1LjUxMjczNTgzIDg5LjY4NzUgMTguMzc1IEM5MC4zMjYyMzA0NyAxOC42NjQ4Nzc5MyA5MC45NjQ5NjA5NCAxOC45NTQ3NTU4NiA5MS42MjMwNDY4OCAxOS4yNTM0MTc5NyBDMTA1LjYyOTMxNTk0IDI1LjY1NDg5NTggMTE4LjA4NTg0OTAyIDM0LjI5NzE0Nzk2IDEyOS42ODc1IDQ0LjM3NSBDMTMxLjA3NTgyMDMxIDQ1LjU2MjIyNjU2IDEzMS4wNzU4MjAzMSA0NS41NjIyMjY1NiAxMzIuNDkyMTg3NSA0Ni43NzM0Mzc1IEMxMzguOTc1MDA0MzYgNTIuNDY2MTA0OTMgMTQ0LjQyODc3NDA0IDU4LjU0OTA0MTUzIDE0OS42ODc1IDY1LjM3NSBDMTUwLjc3OTk4MDQ3IDY2LjcyNjU4MjAzIDE1MC43Nzk5ODA0NyA2Ni43MjY1ODIwMyAxNTEuODk0NTMxMjUgNjguMTA1NDY4NzUgQzE3My40MTg3NDAxMiA5NS40MzQ4MDU3NiAxODUuOTA5Mjk3NTMgMTMyLjgxNjExMTIzIDE4NS44MjAzMTI1IDE2Ny41ODIwMzEyNSBDMTg1LjgyMTc0NzU5IDE2OC44NTIwMDIwMyAxODUuODIxNzQ3NTkgMTY4Ljg1MjAwMjAzIDE4NS44MjMyMTE2NyAxNzAuMTQ3NjI4NzggQzE4NS44MjM4ODc0NCAxNzEuOTI2NjI2MzMgMTg1LjgyMjA3NTYgMTczLjcwNTYyNjQzIDE4NS44MTc4NzEwOSAxNzUuNDg0NjE5MTQgQzE4NS44MTI1MzQ0OSAxNzguMTcwMTQyNjQgMTg1LjgxNzgyNjQyIDE4MC44NTU0OTczNyAxODUuODI0MjE4NzUgMTgzLjU0MTAxNTYyIEMxODUuODIzNTU3NDcgMTg1LjI4Mzg1NDUzIDE4NS44MjIyNzUyOCAxODcuMDI2NjkzMzMgMTg1LjgyMDMxMjUgMTg4Ljc2OTUzMTI1IEMxODUuODIyMzM2NzMgMTg5LjU1NDMxMzUxIDE4NS44MjQzNjA5NiAxOTAuMzM5MDk1NzYgMTg1LjgyNjQ0NjUzIDE5MS4xNDc2NTkzIEMxODUuNzk5ODcyMTggMTk3LjY0NjUzMTg2IDE4NS4yMzI1OTkyNCAyMDMuODMzODA5MDcgMTg0LjY4NzUgMjEwLjM3NSBDMTAxLjg1NzUgMjEwLjM3NSAxOS4wMjc1IDIxMC4zNzUgLTY2LjMxMjUgMjEwLjM3NSBDLTU3LjM3ODE2ODgxIDIzMi43MTA4Mjc5NyAtNDYuNDczNzQzODEgMjQ3LjQxNjk5NjI2IC0yNC40Mzc1IDI1Ny4xODc1IEMzLjE3NTE1NzUxIDI2Ny44ODQ2Mjg3MSAzNi4yNjEzMDE3OCAyNjcuNzcwODY4NDQgNjMuNjI0NTExNzIgMjU2LjI5Nzg1MTU2IEM3My40MTczMTgzNyAyNTEuOTE3MTY0MDkgODIuMzIxNzg3MTYgMjQ2LjM4MDQyMDM5IDkwLjUyODMyMDMxIDIzOS40NzM2MzI4MSBDOTMuNjQwOTk0NjEgMjM2LjkwNDYwMzUzIDk0LjQ1NDE2MjA4IDIzNi4zNzUgOTguNjg3NSAyMzYuMzc1IEMxMDAuOTU4MjUxOTUgMjM4LjE3NTc4MTI1IDEwMC45NTgyNTE5NSAyMzguMTc1NzgxMjUgMTAzLjQyNTc4MTI1IDI0MC42ODc1IEMxMDQuMzI4NzY5NTMgMjQxLjU5ODg2NzE5IDEwNS4yMzE3NTc4MSAyNDIuNTEwMjM0MzcgMTA2LjE2MjEwOTM4IDI0My40NDkyMTg3NSBDMTA3LjEwODExMTU1IDI0NC40MjQ0NDE3IDEwOC4wNTQwNzQ4NiAyNDUuMzk5NzAyMzQgMTA5IDI0Ni4zNzUgQzEwOS45MjQ5MDIzNCAyNDcuMzA5NTcwMzEgMTEwLjg0OTgwNDY5IDI0OC4yNDQxNDA2MiAxMTEuODAyNzM0MzggMjQ5LjIwNzAzMTI1IEMxMTYuMzUyMTExMTcgMjUzLjgzMDc3NTk3IDEyMC43NDUyMjM3OCAyNTguNTMxOTAzNjYgMTI0Ljk3MzM4ODY3IDI2My40NDkyMTg3NSBDMTI4LjIxMTIzNDQzIDI2Ny4wODY4OTUzNCAxMzEuNzE0MzUwMzQgMjcwLjQ2Mzk4MTgxIDEzNS4xODc1IDI3My44NzUgQzE0MC4wMDYyNTE5NSAyNzguNjA3NTQ4ODcgMTQ0LjY0NzYzMDY4IDI4My4zOTI5NDM3MyAxNDkuMDUzMjIyNjYgMjg4LjUxMzY3MTg4IEMxNTEuNDYwMTU4MjkgMjkxLjI1NTAwNCAxNTQuMDIzMjIyNSAyOTMuODIwMDA0MTIgMTU2LjYyNSAyOTYuMzc1IEMxNTcuMzY0NTk5NjEgMjk3LjEwNzgzMjAzIDE1Ny4zNjQ1OTk2MSAyOTcuMTA3ODMyMDMgMTU4LjExOTE0MDYyIDI5Ny44NTU0Njg3NSBDMTU5LjMwNjIzMjI5IDI5OS4wMzEwMzUyNSAxNjAuNDk2NTA0OTggMzAwLjIwMzM4ODI2IDE2MS42ODc1IDMwMS4zNzUgQzE0Ny40NDU4ODAyNyAzMjYuNDE2MTU2MTQgMTExLjE5NjYyMjY3IDM0Mi41ODIyNDI3MSA4NC43OTEwMTU2MiAzNTAuMjExOTE0MDYgQzgxLjcwMjg2MzQ2IDM1MS4wNTYyMjE2NCA3OC42MDY2NTk0NCAzNTEuODUxNjgxIDc1LjUgMzUyLjYyNSBDNzQuNTgyOTEyNiAzNTIuODU5MTI1OTggNzMuNjY1ODI1MiAzNTMuMDkzMjUxOTUgNzIuNzIwOTQ3MjcgMzUzLjMzNDQ3MjY2IEM1NC4zNDMyNTU0NSAzNTcuNjY3NTg4NTMgMzUuNjAwMjQ1MDcgMzU4Ljg3OTkxMjkyIDE2Ljc3ODA3NjE3IDM1OC43NjYxMTMyOCBDMTMuNjIxNzk1MTggMzU4Ljc0OTk4MzYyIDEwLjQ2Njc5MDU1IDM1OC43NjYxMTE4NSA3LjMxMDU0Njg4IDM1OC43ODUxNTYyNSBDLTExLjAwNjI5MjQ3IDM1OC44MDUwMzUzOCAtMjkuMTQ2NTA1NyAzNTcuMTY0ODU3MDkgLTQ2LjkzNzUgMzUyLjYyNSBDLTQ3Ljk2OTA3MjI3IDM1Mi4zNjc1MDk3NyAtNDkuMDAwNjQ0NTMgMzUyLjExMDAxOTUzIC01MC4wNjM0NzY1NiAzNTEuODQ0NzI2NTYgQy04MC45OTI2MjU4NSAzNDMuOTI5NTI0OTIgLTEwOS41MDUxNzkxNiAzMzAuOTU0MzYzMDEgLTEzMy4zMTI1IDMwOS4zNzUgQy0xMzQuMjc2NzE4NzUgMzA4LjU0MjI2NTYzIC0xMzUuMjQwOTM3NSAzMDcuNzA5NTMxMjUgLTEzNi4yMzQzNzUgMzA2Ljg1MTU2MjUgQy0xNDIuNjgwOTkxNDYgMzAxLjIwNjMyMTAxIC0xNDguMDk1MTAwMTMgMjk1LjE2MDQxOTg2IC0xNTMuMzEyNSAyODguMzc1IEMtMTU0LjA2NDAyMzQ0IDI4Ny40Mjc1MzkwNiAtMTU0LjgxNTU0Njg3IDI4Ni40ODAwNzgxMiAtMTU1LjU4OTg0Mzc1IDI4NS41MDM5MDYyNSBDLTE2MS4yOTQ2MTI2NyAyNzguMTYwODQ0NzIgLTE2NS45MjE4MzkyOSAyNzAuNTM5NzYwNTUgLTE3MC4zMTI1IDI2Mi4zNzUgQy0xNzAuODM1ODU5MzggMjYxLjQzMzk4NDM4IC0xNzEuMzU5MjE4NzUgMjYwLjQ5Mjk2ODc1IC0xNzEuODk4NDM3NSAyNTkuNTIzNDM3NSBDLTE4Mi45MjU0MjYxNSAyMzguODExMzY4ODYgLTE4OS4zMjI3OTI2OSAyMTMuOTE2MTIzNDQgLTE4OS41NTA3ODEyNSAxOTAuNDY4NzUgQy0xODkuNTYwNTc1MSAxODkuNjM0NzAxMzkgLTE4OS41NzAzNjg5NiAxODguODAwNjUyNzcgLTE4OS41ODA0NTk1OSAxODcuOTQxMzI5OTYgQy0xODkuNzQ5ODIxNDUgMTY5Ljc3NTk4MDA5IC0xODkuNzM3OTk5MSAxNTIuMTE0Mjk5NDYgLTE4NS4zMTI1IDEzNC4zNzUgQy0xODUuMTAzNTEwNzQgMTMzLjUxNzkzNDU3IC0xODQuODk0NTIxNDggMTMyLjY2MDg2OTE0IC0xODQuNjc5MTk5MjIgMTMxLjc3NzgzMjAzIEMtMTc3LjU3OTM2MzUzIDEwMy42MDcxNzMxMiAtMTYzLjI3NDY2MTA2IDc4LjQwMjY0NTMyIC0xNDMuMzEyNSA1Ny4zNzUgQy0xNDIuODQ4OTIwOSA1Ni44Nzg4NzIwNyAtMTQyLjM4NTM0MTggNTYuMzgyNzQ0MTQgLTE0MS45MDc3MTQ4NCA1NS44NzE1ODIwMyBDLTExNi42ODgxNDk1MyAyOS4wMTUzNDg3NyAtODMuMjExMDczNTYgMTIuNDU1NjE3ODkgLTQ3LjUgNC41NjI1IEMtNDYuNjE4NzY0NjUgNC4zNjc2MDk4NiAtNDUuNzM3NTI5MyA0LjE3MjcxOTczIC00NC44Mjk1ODk4NCAzLjk3MTkyMzgzIEMtMjkuODg2MTcyODggMC44NjE3OTYwNSAtMTUuMjE2MjYxNDQgLTAuMDM0MDc3MDUgMCAwIFogTS01MS4zMTI1IDEwOC4zNzUgQy01OS42OTY1OTcwMiAxMTguOTY2MTQ2NjQgLTY4LjMxMjUgMTMyLjQ0NDgyMzI4IC02OC4zMTI1IDE0Ni4zNzUgQy0yMi4xMTI1IDE0Ni4zNzUgMjQuMDg3NSAxNDYuMzc1IDcxLjY4NzUgMTQ2LjM3NSBDNjcuMzk0MTM1MDIgMTI5LjIwMTU0MDA5IDYzLjIwMzU3NDkyIDExNy41MzUzNzgyOSA1MC42ODc1IDEwNS4zNzUgQzUwLjA3NTE5NTMxIDEwNC43NDIwNzAzMSA0OS40NjI4OTA2MiAxMDQuMTA5MTQwNjMgNDguODMyMDMxMjUgMTAzLjQ1NzAzMTI1IEMzNS4xMjcxNzMxMSA5MC4yMTk3MTYyNCAxNi4yMDcwNjE4NSA4Ni43MzE0NjkxMSAtMi4xMDgxNTQzIDg2LjkwNjQ5NDE0IEMtMjAuNzQ0NzE2NDkgODcuNDQ2Mzc3OTEgLTM4LjY2ODM0Mzk5IDk0LjI1NjA1MzkyIC01MS4zMTI1IDEwOC4zNzUgWiAiIGZpbGw9IiNGRkZGRkYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDcxNC4zMTI1LDI1MS42MjUpIi8+Cgo8cGF0aCBkPSJNMCAwIEMwIDM2LjMgMCA3Mi42IDAgMTEwIEMtNi45MyAxMDkuNTA1IC02LjkzIDEwOS41MDUgLTE0IDEwOSBDLTM5Ljg4MTM1MjI5IDEwOC4xODU4MjU1OCAtNjUuMjQ1NDg0OTUgMTA5LjYyNzIxMzk4IC04Ni4xMjUgMTI3IEMtMTAyLjM5ODYxNjUzIDE0Mi4zOTM5NjE1OSAtMTA4Ljc0NjQ0OTQ2IDE2NC43MDA0MTkyOCAtMTA5LjM4NzgxNzM4IDE4Ni41MTcyMTE5MSBDLTEwOS42MTQ4OTU1OSAxOTYuMDY0MDc2MTkgLTEwOS42MDk1NzEyOCAyMDUuNjE0NTI3MjUgLTEwOS42MDc1MDQ4NCAyMTUuMTYzNTQwODQgQy0xMDkuNjEwNjY3NTUgMjE5Ljk4NjgzMzI3IC0xMDkuNjM2MzU0MzYgMjI0LjgxMDAwOTIgLTEwOS42NTk0ODQ4NiAyMjkuNjMzMjM5NzUgQy0xMDkuNjk5Nzk0MjcgMjM4LjczNDQ3NTg4IC0xMDkuNzIwMzI2MTEgMjQ3LjgzNTY0MDgzIC0xMDkuNzMzNDU4NzYgMjU2LjkzNjk1MjM1IEMtMTA5Ljc1MjQwNzQ3IDI2OS4yNTgzMTQ1NCAtMTA5LjgwMjUwMzY1IDI4MS41Nzk1NDk1MyAtMTA5Ljg1MDcwMjI5IDI5My45MDA4MjU1IEMtMTA5LjkyNTY1MTg4IDMxMy4yNjcyMTAyOCAtMTA5Ljk1OTUwMTEzIDMzMi42MzM0NDE1MSAtMTEwIDM1MiBDLTE1MC4yNiAzNTIgLTE5MC41MiAzNTIgLTIzMiAzNTIgQy0yMzIgMjM3LjgyIC0yMzIgMTIzLjY0IC0yMzIgNiBDLTE5My43MiA2IC0xNTUuNDQgNiAtMTE2IDYgQy0xMTUuNjcgMTguNTQgLTExNS4zNCAzMS4wOCAtMTE1IDQ0IEMtMTEwLjU0NSAzOS4wNSAtMTEwLjU0NSAzOS4wNSAtMTA2IDM0IEMtMTAzLjgyNTQxMzA0IDMyLjAyNjUzMDkxIC0xMDEuNzUyNjk2NzYgMzAuMjA3MjgzMDcgLTk5LjQzNzUgMjguNDM3NSBDLTk4LjU1NDMzMTA1IDI3Ljc1NzM1ODQgLTk4LjU1NDMzMTA1IDI3Ljc1NzM1ODQgLTk3LjY1MzMyMDMxIDI3LjA2MzQ3NjU2IEMtNjguOTU5OTUxNzEgNS41Mzk2ODQ1OCAtMzUuMTMyNDI5OTkgMCAwIDAgWiAiIGZpbGw9IiNGRkZGRkYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDExNTAsMjA5KSIvPgoKPHBhdGggZD0iTTAgMCBDMTQuMDYxMDI5OTIgMTEuOTU1MTY1ODQgMjEuOTk1MDkyNyAyOC43NjE4MTA5OCAyNCA0NyBDMjUuNzY2MTU5MyA2OS44ODMyODE0MiAxOS42NTkwODU0OSA4OS4xNTM1OTEzMyA1LjM1NTQ2ODc1IDEwNy4wNTg1OTM3NSBDLTUuNDQ4OTE4MzMgMTE4LjkwMjM5MDIyIC0yMy4wOTY2NTU0IDEyNy4xMTA1ODgyNSAtMzguOTc4NzU5NzcgMTI4LjIwNTMyMjI3IEMtNDIuMjc5OTc2MzMgMTI4LjMwMzc3MjA5IC00NS41NzIzOTI2NSAxMjguMzIyMDQ1MTEgLTQ4Ljg3NSAxMjguMzEyNSBDLTQ5Ljk4MjMwNDY5IDEyOC4zMjg2MTMyOCAtNTEuMDg5NjA5MzggMTI4LjM0NDcyNjU2IC01Mi4yMzA0Njg3NSAxMjguMzYxMzI4MTIgQy01OS42MTk0NzUxMiAxMjguMzY1NjY5NDkgLTY1Ljk5NzgxNzQxIDEyNy4zNDA1OTY4MiAtNzMgMTI1IEMtNzQuMDY5OTIxODggMTI0LjY0Njc5Njg4IC03NS4xMzk4NDM3NSAxMjQuMjkzNTkzNzUgLTc2LjI0MjE4NzUgMTIzLjkyOTY4NzUgQy05NC42MzU2MDU2MyAxMTYuNTYxNDA0MjcgLTEwOC4yMzg5NzU1NSAxMDMuNDU3NDMzMzYgLTExNi42MDkzNzUgODUuNTU4NTkzNzUgQy0xMjQuODU5NjQ1NzggNjUuMDA1NzEzMyAtMTIzLjg4NjM0OTUgNDIuNTUyMjU0NzYgLTExNS40NjUzMzIwMyAyMi4xNjI1OTc2NiBDLTExMy4wNDQzMzY2NCAxNi42OTY3MjkzNyAtMTEwLjA0NjU2MTc1IDEyLjM2MTU2MzU2IC0xMDYgOCBDLTEwNS4yODE5OTIxOSA3LjE4MDE1NjI1IC0xMDQuNTYzOTg0MzggNi4zNjAzMTI1IC0xMDMuODI0MjE4NzUgNS41MTU2MjUgQy03Ny42MTI2OTkwNSAtMjIuNzk3OTY0MiAtMjkuNTUwNTA3MTEgLTIyLjkxOTI1NzI3IDAgMCBaICIgZmlsbD0iI0ZGQ0MwMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTU4OCwyNDMpIi8+Cgo8L3N2Zz4K" alt="Rere Photo" style="height:34px;width:auto;object-fit:contain;" onerror="this.style.display='none'">
+      </a>
+      <div style="display:flex;align-items:center;gap:.6rem;">
+        <a href="client.html" style="font-size:.73rem;font-weight:700;color:#fff;text-decoration:none;">Akun Saya</a>
+        <button onclick="logoutUser('login-member.html')" style="background:rgba(223,77,0,.15);color:#fff;font-weight:800;font-size:.7rem;padding:.45rem 1rem;border-radius:.65rem;border:2px solid rgba(255,150,100,.4);cursor:pointer;">Keluar</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-6xl w-full mx-auto px-3 sm:px-4 py-5 sm:py-8">
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- HEADING -->
+    <div class="mb-5 sm:mb-7">
+      <div style="font-size:.68rem;font-weight:800;color:#3a5c37;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.3rem;">📸 Booking Online</div>
+      <h1 class="font-display" style="font-size:clamp(1.5rem,3.5vw,2.2rem);color:#3a5c37;text-transform:uppercase;margin-bottom:.3rem;">Booking Sesi Foto</h1>
+      <p style="font-size:.85rem;color:#6b7280;">Pilih paket, tentukan jadwal, dan tim kami akan konfirmasi via WhatsApp.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start">
+      <!-- FORM -->
+      <div class="lg:col-span-2 space-y-4 sm:space-y-6">
+        <div class="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-7 h-7 rounded-full bg-[#3a5c37] text-white text-xs font-black flex items-center justify-center shrink-0">1</span>
+            <h3 class="font-extrabold text-slate-800 text-sm sm:text-base">Pilih Paket Fotobox</h3>
+          </div>
+          <div id="pkg-list" class="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3">
+            <p class="text-xs text-slate-400 col-span-full text-center py-4">Memuat paket...</p>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-7 h-7 rounded-full bg-[#3a5c37] text-white text-xs font-black flex items-center justify-center shrink-0">2</span>
+            <h3 class="font-extrabold text-slate-800 text-sm sm:text-base">Jadwal & Lokasi Sesi</h3>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+              <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1">📅 Tanggal Sesi</label>
+              <input type="date" id="bk-date" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm" />
+            </div>
+            <div>
+              <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1">🕐 Jam Sesi</label>
+              <select id="bk-time" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm bg-white">
+                <option value="">-- Pilih jam --</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1">📍 Lokasi</label>
+              <select id="bk-location" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm bg-white">
+                <option value="">-- Pilih lokasi --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1">👥 Jumlah Orang</label>
+              <input type="number" id="bk-guests" min="1" max="99" value="2" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm" />
+            </div>
+            <div>
+              <label class="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1">📝 Catatan <span class="text-slate-400 font-normal">(opsional)</span></label>
+              <input type="text" id="bk-notes" placeholder="Contoh: tema ulang tahun, frame custom..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-[#3a5c37] text-sm" />
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 border-[#3a5c37] shadow-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="text-[10px] sm:text-xs font-bold text-[#3a5c37] uppercase tracking-wider">Ringkasan Biaya</div>
+              <div class="text-2xl sm:text-3xl font-black text-[#df4d00]" id="bk-total">Rp 0</div>
+              <div class="text-[10px] sm:text-xs text-slate-500" id="bk-breakdown">Pilih paket & jadwal dulu ya.</div>
+            </div>
+            <button type="button" id="btn-submit-booking"
+              style="background:#feb702;color:#1c1917;font-weight:800;font-size:.8rem;padding:.85rem 1.6rem;border-radius:.85rem;border:none;letter-spacing:.05em;box-shadow:3px 3px 0 #e0a000;cursor:pointer;white-space:nowrap;">
+              Kirim Booking 🚀
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIDEBAR -->
+      <div class="space-y-4 sm:space-y-6">
+        <div style="background:#3a5c37;border-radius:1.25rem;padding:1.25rem;color:#fff;">
+          <h3 class="font-display text-lg mb-2" style="text-transform:uppercase;">Kenapa Booking di Sini?</h3>
+          <ul style="font-size:.78rem;color:rgba(255,255,255,.85);display:flex;flex-direction:column;gap:.55rem;">
+            <li>✅ <b>Konfirmasi cepat</b> via WhatsApp</li>
+            <li>✅ <b>Gratis cetak</b> foto di setiap sesi</li>
+            <li>✅ Semua <b>file digital GRATIS</b></li>
+            <li>✅ Kumpulkan <b>poin loyalitas</b> tiap sesi</li>
+            <li>✅ Batalkan booking <b>tanpa ribet</b> (sebelum dikonfirmasi)</li>
+          </ul>
+        </div>
+
+                <!-- Info: riwayat booking ada di Akun Member -->
+        <div class="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs p-4 sm:p-5">
+          <h3 class="font-bold text-slate-800 text-sm sm:text-base">📋 Sudah Punya Booking?</h3>
+          <p class="text-[10px] sm:text-xs text-slate-500 mt-1">Cek status & riwayat booking, atau batalkan booking di <b>Akun Saya</b>.</p>
+          <a href="client.html" style="display:block;margin-top:.8rem;background:#3a5c37;color:#fff;font-weight:800;font-size:.75rem;padding:.6rem 1rem;border-radius:.7rem;text-decoration:none;text-align:center;">👤 Buka Akun Saya →</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="py-5 sm:py-6 border-t border-slate-200 text-center text-[10px] sm:text-xs text-slate-400 bg-white mt-auto">
+    &copy; 2026 Rere Photo — Booking Sesi Foto.
+  </footer>
+
+  <!-- MODAL SUKSES -->
+  <div id="booking-success-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-7 max-w-sm w-full shadow-2xl text-center">
+      <div class="w-14 h-14 rounded-full bg-[#d1fae5] text-[#065f46] text-2xl flex items-center justify-center mx-auto mb-3">✅</div>
+      <h3 class="font-black text-slate-900 text-base sm:text-lg mb-1">Booking Terkirim!</h3>
+      <p class="text-[11px] sm:text-xs text-slate-500 mb-4">Simpan kode booking berikut dan konfirmasi via WhatsApp agar sesi fotomu dikunci.</p>
+      <div class="bg-[#fff8e1] border-2 border-dashed border-[#feb702] rounded-xl py-2.5 font-mono font-black text-[#92400e] text-base tracking-widest mb-3" id="bk-code">BK-XXXXXX</div>
+      <div class="text-xs text-slate-700 font-semibold mb-1" id="bk-ok-package"></div>
+      <div class="text-[11px] text-slate-500 mb-5" id="bk-ok-detail"></div>
+      <div class="flex flex-col gap-2">
+        <a href="#" id="bk-wa-link" target="_blank" rel="noopener" style="background:#3a5c37;color:#fff;font-weight:800;font-size:.78rem;padding:.8rem 1.2rem;border-radius:.8rem;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:.4rem;">💬 Konfirmasi via WhatsApp</a>
+        <button onclick="closeSuccessModal()" style="background:#f1f5f9;color:#334155;font-weight:800;font-size:.75rem;padding:.7rem 1.2rem;border-radius:.8rem;border:none;cursor:pointer;">Selesai</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    const TIME_SLOTS = ["09:00", "10:30", "12:00", "13:30", "15:00", "16:30", "18:00", "19:30"];
+    let selectedPackage = null;
+    let appSettingsLocal = {};
+
+    // ── GUARD LOGIN ────────────────────────────────
+    const _u = JSON.parse(localStorage.getItem("REREPHOTO_USER"));
+    if (!_u || _u.role !== "client") {
+      window.location.href = "login-member.html?next=" + encodeURIComponent("booking.html");
+    }
+
+    // ── RENDER PAKET ───────────────────────────────
+    async function loadPackages() {
+      const res = await sendGasRequest("getPackages", {}, "GET");
+      const packages = (res && res.status === "success") ? (res.packages || []) : [];
+      const params = new URLSearchParams(window.location.search);
+      const pre = params.get("paket");
+      const wrap = document.getElementById("pkg-list");
+      if (!packages.length) {
+        wrap.innerHTML = `<p class="text-xs text-slate-400 col-span-full text-center py-4">Belum ada paket tersedia.</p>`;
+        return;
+      }
+      wrap.innerHTML = packages.filter(p => p.status === "Aktif").map(p => {
+        const harga = p.price_type === "per_orang"
+          ? "Rp " + Number(p.price).toLocaleString("id-ID") + '<span style="font-size:.55rem;font-weight:600;color:#6b7280;">/org</span>'
+          : "Rp " + Number(p.price).toLocaleString("id-ID");
+        return `
+        <div class="pkg-card p-3 ${pre === p.package_id ? 'selected' : ''}" data-pkg='${escapeHtml(JSON.stringify(p)).replace(/'/g, "&#39;")}' onclick="selectPkg(this)">
+          <span class="pkg-check">✓</span>
+          <div style="font-weight:900;color:#1a1a1a;font-size:.78rem;text-transform:uppercase;padding-right:1.2rem;">${escapeHtml(p.name)}</div>
+          <div style="font-size:.95rem;font-weight:900;color:#df4d00;margin:.1rem 0;">${harga}</div>
+          <div style="font-size:.6rem;color:#6b7280;">${escapeHtml(p.description || "")}</div>
+          <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.4rem;">
+            <span style="background:#edf5ed;color:#3a5c37;font-size:.55rem;font-weight:800;padding:.1rem .45rem;border-radius:999px;">+${Number(p.points) || 0} Poin</span>
+            <span style="background:#fff8e1;color:#b45309;font-size:.55rem;font-weight:800;padding:.1rem .45rem;border-radius:999px;">${Number(p.free_print) || 1}× Cetak</span>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    function selectPkg(el) {
+      document.querySelectorAll(".pkg-card").forEach(c => c.classList.remove("selected"));
+      el.classList.add("selected");
+      selectedPackage = JSON.parse(el.getAttribute("data-pkg"));
+      recalcTotal();
+    }
+
+    // ── JADWAL ─────────────────────────────────────
+    function setupSchedule() {
+      const dateInput = document.getElementById("bk-date");
+      const today = new Date();
+      const iso = today.toLocaleDateString("en-CA");
+      dateInput.min = iso;
+      dateInput.value = iso;
+
+      const timeSel = document.getElementById("bk-time");
+      timeSel.innerHTML = '<option value="">-- Pilih jam --</option>' + TIME_SLOTS.map(t => `<option value="${t}">${t} WIB</option>`).join("");
+
+      const locSel = document.getElementById("bk-location");
+      const alamat = appSettingsLocal.studio_alamat || "Jl. Raya, Tanjungpura, Kec. Karangampel, Kabupaten Indramayu";
+      const opts = [
+        alamat,
+        "Event / Lokasi Lain (tulis alamat di catatan)"
+      ];
+      locSel.innerHTML = '<option value="">-- Pilih lokasi --</option>' + opts.map(o => `<option value="${o}">${o}</option>`).join("");
+    }
+
+    // ── RINGKASAN HARGA ────────────────────────────
+    function recalcTotal() {
+      const totalEl = document.getElementById("bk-total");
+      const bdEl = document.getElementById("bk-breakdown");
+      if (!selectedPackage) { totalEl.textContent = "Rp 0"; bdEl.textContent = "Pilih paket & jadwal dulu ya."; return; }
+      const p = selectedPackage;
+      const guests = Math.max(1, Number(document.getElementById("bk-guests").value) || 1);
+      const minP = Number(p.min_person) || 1;
+      const extraPerson = Number(p.extra_person_price) || 0;
+      const base = Number(p.price) || 0;
+      let total = 0, bd = [];
+
+      if (p.price_type === "per_orang") {
+        total = base * guests;
+        bd.push(guests + " org × " + fmtIDR(base) + " = " + fmtIDR(total));
+      } else {
+        total = base;
+        bd.push("Flat " + fmtIDR(base));
+        if (extraPerson > 0 && guests > minP) {
+          total += (guests - minP) * extraPerson;
+          bd.push("+" + (guests - minP) + " org ekstra × " + fmtIDR(extraPerson));
+        }
+      }
+      totalEl.textContent = fmtIDR(total);
+      bdEl.textContent = bd.join(" · ");
+    }
+
+    // ── SUBMIT ─────────────────────────────────────
+    async function submitBooking() {
+      if (!selectedPackage) { showToast("Pilih paket fotobox dulu ya!", "error"); return; }
+      const date = document.getElementById("bk-date").value;
+      const time = document.getElementById("bk-time").value;
+      const location = document.getElementById("bk-location").value;
+      const guests = Number(document.getElementById("bk-guests").value) || 1;
+      const notes = document.getElementById("bk-notes").value.trim();
+      if (!date) { showToast("Isi tanggal sesi.", "error"); return; }
+      if (!time) { showToast("Pilih jam sesi.", "error"); return; }
+      if (!location) { showToast("Pilih lokasi sesi.", "error"); return; }
+
+      const p = selectedPackage;
+      const minP = Number(p.min_person) || 1;
+      const extraPerson = Number(p.extra_person_price) || 0;
+      const base = Number(p.price) || 0;
+      let total = p.price_type === "per_orang" ? base * guests : base;
+      if (p.price_type !== "per_orang" && extraPerson > 0 && guests > minP) total += (guests - minP) * extraPerson;
+
+      const btn = document.getElementById("btn-submit-booking");
+      btn.disabled = true;
+      btn.textContent = "Mengirim...";
+      try {
+        const res = await createBookingRequest({
+          package_id: p.package_id,
+          package_name: p.name,
+          date, time, location, guests, notes, total
+        });
+        if (res && res.status === "success") {
+          showToast(res.message, "success");
+          document.getElementById("bk-code").textContent = res.booking.booking_id;
+          document.getElementById("bk-ok-package").textContent = res.booking.package_name;
+          document.getElementById("bk-ok-detail").textContent = bookingDateTimeLabel(res.booking);
+          const wa = (appSettingsLocal.studio_wa || "6281234567890").replace(/[^0-9]/g, "");
+          const msg = encodeURIComponent(
+            "Halo Rere Photo! Saya mau konfirmasi booking foto.\nKode: " + res.booking.booking_id +
+            "\nPaket: " + res.booking.package_name + "\nTanggal: " + res.booking.date + " " + res.booking.time + " WIB"
+          );
+          document.getElementById("bk-wa-link").href = "https://wa.me/" + wa + "?text=" + msg;
+          document.getElementById("booking-success-modal").classList.remove("hidden");
+          resetForm();
+        } else {
+          showToast(res ? res.message : "Gagal membuat booking.", "error");
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Kirim Booking 🚀";
+      }
+    }
+
+    function resetForm() {
+      selectedPackage = null;
+      document.querySelectorAll(".pkg-card").forEach(c => c.classList.remove("selected"));
+      document.getElementById("bk-notes").value = "";
+      recalcTotal();
+    }
+
+    function closeSuccessModal() { document.getElementById("booking-success-modal").classList.add("hidden"); }
+
+    // ── RIWAYAT BOOKING SAYA ───────────────────────
+    // ── INIT ───────────────────────────────────────
+    document.addEventListener("DOMContentLoaded", async () => {
+      const st = await sendGasRequest("getSettings", {}, "GET");
+      if (st && st.status === "success" && st.settings) appSettingsLocal = st.settings;
+      setupSchedule();
+      await loadPackages();
+      document.getElementById("btn-submit-booking").addEventListener("click", submitBooking);
+      document.getElementById("bk-guests").addEventListener("input", recalcTotal);
+    });
+  </script>
+</body>
+</html>
