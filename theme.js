@@ -154,7 +154,13 @@
 
   function fetchCloudUi() {
     var gasUrl = "";
-    try { gasUrl = localStorage.getItem("REREPHOTO_GAS_URL") || ""; } catch (e) {}
+    try {
+      // Pakai URL yang sama dengan app.js (localStorage owner ATAU default bawaan
+      // kode) — biar semua perangkat otomatis nyambung ke cloud tanpa set manual.
+      gasUrl = (typeof window.getResolvedGasUrl === "function")
+        ? window.getResolvedGasUrl()
+        : (localStorage.getItem("REREPHOTO_GAS_URL") || "");
+    } catch (e) {}
     if (!gasUrl || !/^https?:/i.test(gasUrl)) return;
     try {
       fetch(gasUrl + (gasUrl.indexOf("?") !== -1 ? "&" : "?") + "action=getSettings", { method: "GET" })
